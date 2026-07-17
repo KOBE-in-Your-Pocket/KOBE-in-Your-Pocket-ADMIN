@@ -7,8 +7,6 @@
 - Vite + React 19 + TypeScript
 - Backend REST API（Supabase 直叩きしない）
 
-要件・機能一覧は [`minutes/admin/2026-07-16_管理者画面_機能要件一覧.md`](../minutes/admin/2026-07-16_管理者画面_機能要件一覧.md) を参照。
-
 ## セットアップ
 
 ```bash
