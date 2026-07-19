@@ -56,8 +56,12 @@
   color: #fff;
 }
 
+/*
+ * トークンに danger のホバー色が無い（--color-danger-disabled は無効状態用の薄い赤）。
+ * 薄くすると無効に見えるため、暗くする方向で表現する。
+ */
 .danger:hover:not(:disabled) {
-  background: var(--color-danger-disabled);
+  filter: brightness(0.92);
 }
 
 /* テキストのみ。フィルタークリア等 */
