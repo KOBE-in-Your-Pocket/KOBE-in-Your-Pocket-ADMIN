@@ -1,0 +1,62 @@
+/* デザイン（KOBE 管理画面.dc.html）から抽出したデザイントークン */
+:root {
+  /* ブランド */
+  --color-primary: #1e5aa7;
+  --color-primary-hover: #164a8a;
+  --color-primary-tint: #e6f0fb;
+  --color-primary-surface: #f0f6fd;
+
+  /* ロール */
+  --color-operator: #2e7d32;
+
+  /* ステータス */
+  --color-danger: #e53935;
+  --color-danger-disabled: #f1a9a9;
+  --color-warning: #f39c12;
+  --color-warning-tint: #fef3c7;
+  --color-warning-icon: #f5a623;
+  --color-success: #16a34a;
+
+  /* 背景・面 */
+  --color-bg: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-overlay: rgba(15, 23, 42, 0.45);
+
+  /* 罫線 */
+  --color-border: #e5e7eb;
+  --color-border-strong: #cbd5e1;
+  --color-border-soft: #f1f5f9;
+  --color-border-subtle: #e2e8f0;
+  --color-border-divider: #eef2f6;
+
+  /* テキスト */
+  --color-text: #333333;
+  --color-text-heading: #1f2937;
+  --color-text-body: #334155;
+  --color-text-label: #374151;
+  --color-text-muted: #475569;
+  --color-text-subtle: #64748b;
+  --color-text-faint: #94a3b8;
+  --color-text-placeholder: #9ca3af;
+  --color-text-nav: #4b5563;
+  --color-text-nav-icon: #6b7280;
+
+  /* 角丸 */
+  --radius-sm: 5px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-full: 50%;
+
+  /* 影 */
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.2);
+  --shadow-focus: 0 0 0 3px rgba(30, 90, 167, 0.12);
+
+  /* レイアウト */
+  --header-height: 60px;
+  --sidebar-width: 240px;
+
+  /* フォント */
+  --font-sans: 'Noto Sans JP', 'Inter', system-ui, sans-serif;
+  --font-display: 'Inter', sans-serif;
+}

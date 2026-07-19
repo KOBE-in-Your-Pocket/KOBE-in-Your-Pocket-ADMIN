@@ -42,8 +42,9 @@ src/
 │   └── components/              # AppLayout 等
 ├── lib/                         # storage, format 等
 ├── routes/                      # Router 定義・ガード・パス定数
+├── styles/                      # tokens.css（デザイントークン）/ global.css（リセット・基本要素）
 ├── types/                       # Role 等の共通型
-├── index.css
+├── index.css                    # 画面共通のレイアウト・ユーティリティクラス
 └── main.tsx
 ```
 

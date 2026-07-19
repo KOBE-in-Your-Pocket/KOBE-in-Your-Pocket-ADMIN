@@ -1,68 +1,45 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-:root {
-  --bg: #f8fafc;
-  --surface: #ffffff;
-  --text: #0f172a;
-  --muted: #64748b;
-  --border: #e2e8f0;
-  --primary: #2563eb;
-  --danger: #dc2626;
-  --sidebar-width: 240px;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  line-height: 1.5;
-  color: var(--text);
-  background: var(--bg);
-}
+/* リセット・トークン・基本要素のスタイルは styles/global.css / styles/tokens.css を参照 */
 
 body {
-  margin: 0;
+  line-height: 1.5;
 }
 
 #root {
   min-height: 100svh;
 }
 
-a {
-  color: var(--primary);
-}
-
 .muted {
-  color: var(--muted);
+  color: var(--color-text-subtle);
 }
 
 .btn {
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   font: inherit;
   padding: 0.5rem 1rem;
 }
 
 .btn-primary {
-  background: var(--primary);
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--color-surface);
 }
 
 .btn-secondary {
-  background: var(--surface);
-  border-color: var(--border);
-  color: var(--text);
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text);
 }
 
 .btn-danger {
-  background: var(--danger);
-  color: #fff;
+  background: var(--color-danger);
+  color: var(--color-surface);
 }
 
 .link-button {
   background: none;
   border: none;
-  color: var(--primary);
+  color: var(--color-primary);
   cursor: pointer;
   font: inherit;
   padding: 0;
@@ -82,8 +59,8 @@ a {
 }
 
 .sidebar {
-  background: var(--surface);
-  border-right: 1px solid var(--border);
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
   padding: 1.25rem 1rem;
 }
 
@@ -99,16 +76,16 @@ a {
 }
 
 .sidebar-nav a {
-  border-radius: 6px;
-  color: var(--text);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
   padding: 0.5rem 0.75rem;
   text-decoration: none;
 }
 
 .sidebar-nav a.active,
 .sidebar-nav a:hover {
-  background: #eff6ff;
-  color: var(--primary);
+  background: var(--color-primary-tint);
+  color: var(--color-primary);
 }
 
 .main-column {
@@ -119,8 +96,8 @@ a {
 
 .app-header {
   align-items: center;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
@@ -128,9 +105,9 @@ a {
 }
 
 .role-badge {
-  background: #eff6ff;
+  background: var(--color-primary-tint);
   border-radius: 999px;
-  color: var(--primary);
+  color: var(--color-primary);
   font-size: 0.75rem;
   padding: 0.15rem 0.5rem;
   text-transform: uppercase;
