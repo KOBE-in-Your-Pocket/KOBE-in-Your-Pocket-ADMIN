@@ -1,0 +1,80 @@
+/* ADMIN-image shared/ui/Controls.module.css の primaryButton / secondaryButton / rowButton を参考 */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* サイズ */
+.md {
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.sm {
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 400;
+  border-radius: var(--radius-sm);
+}
+
+/* 種別 */
+.primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.secondary {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-muted);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--color-border-soft);
+}
+
+.danger {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.danger:hover:not(:disabled) {
+  background: var(--color-danger-disabled);
+}
+
+/* テキストのみ。フィルタークリア等 */
+.ghost {
+  background: none;
+  border-color: transparent;
+  color: var(--color-primary);
+  padding-left: 0;
+  padding-right: 0;
+  font-weight: 400;
+}
+
+.ghost:hover:not(:disabled) {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+.fullWidth {
+  width: 100%;
+}

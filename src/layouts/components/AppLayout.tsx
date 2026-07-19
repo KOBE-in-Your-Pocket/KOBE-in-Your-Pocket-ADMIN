@@ -1,4 +1,5 @@
 import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
+import { Button } from "../../components";
 import { useAuth } from "../../features/auth";
 import { ROUTES } from "../../routes/paths";
 
@@ -25,9 +26,9 @@ export function AppLayout() {
           {user !== null && (
             <span className="role-badge">{user.role}</span>
           )}
-          <button type="button" className="link-button" onClick={logout}>
+          <Button variant="ghost" size="sm" onClick={logout}>
             ログアウト
-          </button>
+          </Button>
         </header>
         <main className="app-main">
           <Outlet />
