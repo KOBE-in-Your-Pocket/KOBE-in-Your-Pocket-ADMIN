@@ -16,6 +16,10 @@ reviews:
   poem: false
   auto_review:
     enabled: true
+    # 既定の true だと push のたびに再レビューが走り、無料枠の回数をすぐ使い切る。
+    # PR 1本につき1回に抑え、再レビューが必要なときは PR コメントで
+    # `@coderabbitai review` を送って手動実行する。
+    auto_incremental_review: false
     drafts: false
     base_branches:
       - develop
