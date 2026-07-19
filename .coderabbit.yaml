@@ -1,0 +1,60 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit 設定: https://docs.coderabbit.ai/reference/configuration
+# GitHub App インストール: https://github.com/apps/coderabbitai
+
+language: ja-JP
+
+tone_instructions: >
+  Vite/React/TypeScript のシニアレビュアーとして、簡潔で建設的な日本語フィードバックを提供する。
+  設計・ロジック・仕様妥当性に集中し、lint/build など CI 済みの指摘は避ける。
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  poem: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - develop
+      - main
+  path_filters:
+    - "!**/*.lock"
+    - "!**/pnpm-lock.yaml"
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+  path_instructions:
+    - path: "**"
+      instructions: |
+        REVIEW.md・docs/directory-structure.md の基準に従うこと。
+        神戸市特化観光アプリの運営・管理者 Web 画面（Vite + React 19 SPA）。
+        oxlint・tsc・vite build は CI で担保済み — これらの指摘は不要。
+        PR は develop 向け。Backend API は既存 Spring Boot 経由（Supabase 直叩き禁止）。
+    - path: "src/routes/**"
+      instructions: |
+        React Router の定義・ガード。画面 UI は features/*/screens に置くこと。
+    - path: "src/features/**"
+      instructions: |
+        機能モジュール。画面は screens/、API は api/、専用 UI は components/。
+        他 feature の内部ファイルを直接 import しない。
+    - path: "src/components/**"
+      instructions: |
+        2つ以上の feature で使う汎用 UI のみ。機能専用 UI は features/* に置く。
+    - path: "src/api/**"
+      instructions: |
+        共通 fetch クライアント。service_role や Supabase 秘密情報を Client に載せない。
+    - path: "src/layouts/**"
+      instructions: |
+        AppShell 等のレイアウト。認可ガードは routes/guards と役割分担を守る。
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - REVIEW.md
+      - docs/directory-structure.md
