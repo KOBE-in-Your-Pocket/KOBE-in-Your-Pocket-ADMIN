@@ -27,9 +27,11 @@ export function Input({
   ...props
 }: InputProps) {
   const autoId = useId();
-  const inputId = id ?? autoId;
+  // 空文字も未指定として扱う。?? では "" が通ってしまい、
+  // id が空になったり hint が hidden になったりする。
+  const inputId = id || autoId;
   const describedById = `${inputId}-desc`;
-  const description = error ?? hint;
+  const description = error || hint;
 
   return (
     <div className={styles.field}>
