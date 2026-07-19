@@ -5,9 +5,8 @@
 ## 技術スタック
 
 - Vite + React 19 + TypeScript
+- React Router
 - Backend REST API（Supabase 直叩きしない）
-
-要件・機能一覧は [`minutes/admin/2026-07-16_管理者画面_機能要件一覧.md`](../minutes/admin/2026-07-16_管理者画面_機能要件一覧.md) を参照。
 
 ## セットアップ
 
@@ -26,35 +25,25 @@ pnpm dev               # http://localhost:5173
 
 ## Backend 接続
 
-### 開発（既定）
-
-`pnpm dev` では `/api/*` を Vite プロキシ経由で Backend へ転送します（CORS 不要）。
-
-転送先の変更:
+開発時は `/api/*` を Vite プロキシ経由で Backend へ転送（CORS 不要）。
 
 ```bash
 VITE_PROXY_TARGET=http://localhost:9090 pnpm dev
 ```
 
-### 本番ビルド
+## ディレクトリ構成
 
-`.env` に API のベース URL を設定:
+[`docs/directory-structure.md`](./docs/directory-structure.md) を参照。
 
-```bash
-VITE_API_BASE_URL=https://your-backend.example.com
-```
+要点:
 
-## ディレクトリ構成（予定）
+- 画面は **`features/*/screens/`** に統一（トップ `screens/` は作らない）
+- **`components/`** は汎用 UI のみ
+- 認証は **`features/auth/`** に集約（context / API / ログイン画面）
 
-```
-src/
-├── api/          # fetch ラッパ・エンドポイント定義
-├── app/          # ルーティング・ガード
-├── pages/        # 画面
-├── widgets/      # レイアウト（ヘッダー・サイドバー等）
-├── features/     # 機能単位 UI
-└── shared/       # 共通 UI・設定・型
-```
+## 要件
+
+- [minutes/admin/2026-07-16_管理者画面_機能要件一覧.md](../minutes/admin/2026-07-16_管理者画面_機能要件一覧.md)
 
 ## ロール
 
