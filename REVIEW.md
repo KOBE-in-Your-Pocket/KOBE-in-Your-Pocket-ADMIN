@@ -1,7 +1,15 @@
 # AI / 人間共通 PR レビュー基準
 
-このファイルは PR レビュー（[CodeRabbit](https://github.com/apps/coderabbitai) 一次レビュー・人間レビュー共通）の判断基準です。
+このファイルは PR レビューの判断基準です。AI レビュー2種と人間レビューで共通して使います。
 詳細な配置ルールは [`docs/directory-structure.md`](./docs/directory-structure.md) を参照してください。
+
+| レビュアー | 実行方法 | 設定 |
+| --- | --- | --- |
+| [CodeRabbit](https://github.com/apps/coderabbitai) | GitHub App（自動） | [`.coderabbit.yaml`](./.coderabbit.yaml) |
+| [PR-Agent](https://github.com/the-pr-agent/pr-agent) | GitHub Actions（自動 `/review`） | [`.pr_agent.toml`](./.pr_agent.toml) |
+
+PR-Agent は自動では `/review` のみ実行します。PR コメントで `/describe`（説明生成）や
+`/improve`（コード改善提案）を送れば手動で追加実行できます。
 
 ## プロジェクト概要
 

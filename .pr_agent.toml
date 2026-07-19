@@ -1,0 +1,41 @@
+# PR-Agent 設定: https://github.com/the-pr-agent/pr-agent
+# 実行は .github/workflows/pr-agent.yml（自動は /review のみ）。
+# CodeRabbit（.coderabbit.yaml）と併用し、両方にフルレビューさせる方針。
+
+[config]
+response_language = "ja-JP"
+# REVIEW.md / docs をレビュー時のプロンプト文脈に含める
+repo_context_files = ["REVIEW.md", "docs/directory-structure.md"]
+
+[pr_reviewer]
+extra_instructions = """
+Vite + React 19 + TypeScript の管理画面（神戸市特化観光アプリの運営・管理者 Web）。
+日本語で、設計・ロジック・仕様妥当性に集中してレビューすること。
+
+必ず守る前提:
+- oxlint / tsc / vite build は CI で担保済み。lint・型・ビルドの指摘は不要。
+- 配置ルールは docs/directory-structure.md に従う。画面は features/*/screens/、
+  汎用 UI のみ src/components/、機能専用 UI は features/*/components/。
+- 他 feature の内部ファイルを直接 import していないか。
+- Backend は既存の Spring Boot REST API 経由。Supabase の直叩き・service_role や
+  JWT secret の Frontend 混入は重大な指摘とすること。
+- トークンを console.log していないか。
+- TanStack Query のキャッシュ・エラー・401/403 ハンドリングが適切か。
+- operator / admin の権限差が UI と API の両方で守られているか。
+"""
+# CodeRabbit と重複するため、PR-Agent 側では所要時間・チケット分析は出さない
+require_estimate_effort_to_review = false
+require_ticket_analysis_review = false
+require_security_review = true
+require_tests_review = true
+# 指摘なしの「問題ありません」コメントを抑制
+publish_output_no_suggestions = false
+# 再 push のたびにコメントを増やさず、既存コメントを更新する
+persistent_comment = true
+
+[ignore]
+glob = [
+    "pnpm-lock.yaml",
+    "dist/**",
+    "node_modules/**",
+]

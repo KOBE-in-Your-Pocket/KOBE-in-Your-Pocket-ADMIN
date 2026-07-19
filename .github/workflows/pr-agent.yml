@@ -1,0 +1,32 @@
+name: PR Agent
+
+# CodeRabbit と併用する二次レビュー。
+# 自動実行は /review のみ。/describe・/improve は PR コメントで手動実行する。
+# synchronize は PR-Agent 既定の pr_actions に含まれず空振りするため入れない。
+# push のたびに再レビューしたい場合は PR コメントで /review を送る。
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  issue_comment:
+
+jobs:
+  pr_agent:
+    # Bot の PR / コメントには反応させない（無限ループ防止）
+    if: ${{ github.event.sender.type != 'Bot' }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+    steps:
+      - name: PR Agent action step
+        uses: the-pr-agent/pr-agent@v0.39.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC.KEY: ${{ secrets.ANTHROPIC_KEY }}
+          config.model: "anthropic/claude-opus-4-8"
+          config.fallback_models: '["anthropic/claude-sonnet-5"]'
+          github_action_config.auto_review: "true"
+          github_action_config.auto_describe: "false"
+          github_action_config.auto_improve: "false"
+          github_action_config.pr_actions: '["opened", "reopened", "ready_for_review"]'
