@@ -1,6 +1,39 @@
 import { useState } from "react";
-import { Button, Input, Spinner } from "../../../components";
+import {
+  Button,
+  Card,
+  ConfirmDialog,
+  Input,
+  Modal,
+  Spinner,
+  Table,
+  type Column,
+} from "../../../components";
 import styles from "./UiGalleryScreen.module.css";
+
+type DemoRow = { id: string; name: string; role: string; count: number };
+
+const DEMO_ROWS: DemoRow[] = [
+  { id: "1", name: "北野異人館", role: "operator", count: 12 },
+  { id: "2", name: "神戸ハーバーランド", role: "admin", count: 5 },
+];
+
+const DEMO_COLUMNS: Column<DemoRow>[] = [
+  { key: "name", header: "名前", primary: true },
+  { key: "role", header: "ロール" },
+  { key: "count", header: "レビュー数", align: "end" },
+  {
+    key: "actions",
+    header: "",
+    headerLabel: "操作",
+    align: "end",
+    cell: () => (
+      <Button size="sm" variant="danger">
+        削除
+      </Button>
+    ),
+  },
+];
 
 /**
  * 汎用 UI の目視確認用ギャラリー（開発ビルド限定 / `/dev/ui`）。
@@ -10,6 +43,9 @@ import styles from "./UiGalleryScreen.module.css";
  */
 export function UiGalleryScreen() {
   const [text, setText] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   return (
     <div className={styles.page}>
@@ -96,6 +132,80 @@ export function UiGalleryScreen() {
           <Spinner size="md" onDark />
         </div>
       </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Card</h2>
+        <div className={styles.stack}>
+          <Card title="タイトル付きカード">
+            <p className="muted">本文がここに入ります。</p>
+          </Card>
+          <Card>タイトル無しのカード。</Card>
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Table</h2>
+
+        <p className={styles.caseTitle}>データあり</p>
+        <Table
+          columns={DEMO_COLUMNS}
+          data={DEMO_ROWS}
+          rowKey={(r) => r.id}
+        />
+
+        <p className={styles.caseTitle}>空状態</p>
+        <Table
+          columns={DEMO_COLUMNS}
+          data={[]}
+          rowKey={(r) => r.id}
+          empty="スポットがまだありません"
+        />
+
+        <p className={styles.caseTitle}>ローディング</p>
+        <Table columns={DEMO_COLUMNS} data={[]} rowKey={(r) => r.id} loading />
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Modal / ConfirmDialog</h2>
+        <div className={styles.row}>
+          <Button onClick={() => setModalOpen(true)}>Modal を開く</Button>
+          <Button variant="danger" onClick={() => setConfirmOpen(true)}>
+            削除確認を開く
+          </Button>
+        </div>
+      </section>
+
+      {modalOpen && (
+        <Modal onClose={() => setModalOpen(false)} width={420} label="サンプル">
+          <h3 style={{ marginTop: 0 }}>サンプルモーダル</h3>
+          <p className="muted">
+            Escape・オーバーレイクリック・閉じるボタンで閉じます。Tab
+            はこの中を循環します。
+          </p>
+          <Input label="フォーカストラップ確認用" placeholder="入力できます" />
+          <div style={{ marginTop: 16, textAlign: "right" }}>
+            <Button onClick={() => setModalOpen(false)}>閉じる</Button>
+          </div>
+        </Modal>
+      )}
+
+      {confirmOpen && (
+        <ConfirmDialog
+          title="スポットを削除しますか？"
+          message="「北野異人館」を削除します。"
+          note="この操作は取り消せません。"
+          loading={confirmLoading}
+          onConfirm={() => {
+            // loading 表示の確認用に少し待ってから閉じる
+            setConfirmLoading(true);
+            setTimeout(() => {
+              setConfirmLoading(false);
+              setConfirmOpen(false);
+            }, 1200);
+          }}
+          onClose={() => setConfirmOpen(false)}
+        />
+      )}
     </div>
   );
 }
