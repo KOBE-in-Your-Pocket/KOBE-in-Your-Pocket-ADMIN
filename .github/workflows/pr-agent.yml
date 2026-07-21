@@ -4,6 +4,10 @@ name: PR Agent
 # 自動実行は /review のみ。/describe・/improve は PR コメントで手動実行する。
 # synchronize は PR-Agent 既定の pr_actions に含まれず空振りするため入れない。
 # push のたびに再レビューしたい場合は PR コメントで /review を送る。
+#
+# モデルは Google AI Studio の Gemini（無料枠あり）を使う。
+# 実行にはリポジトリ secret GEMINI_API_KEY の登録が必要。
+# 取得: https://aistudio.google.com/apikey
 on:
   pull_request:
     types: [opened, reopened, ready_for_review]
@@ -23,9 +27,9 @@ jobs:
         uses: the-pr-agent/pr-agent@v0.39.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ANTHROPIC.KEY: ${{ secrets.ANTHROPIC_KEY }}
-          config.model: "anthropic/claude-opus-4-8"
-          config.fallback_models: '["anthropic/claude-sonnet-5"]'
+          GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          config.model: "gemini/gemini-2.5-flash"
+          config.fallback_models: '["gemini/gemini-2.0-flash"]'
           github_action_config.auto_review: "true"
           github_action_config.auto_describe: "false"
           github_action_config.auto_improve: "false"
