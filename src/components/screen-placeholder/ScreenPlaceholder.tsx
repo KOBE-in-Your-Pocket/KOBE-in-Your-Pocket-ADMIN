@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Card } from "../../components";
+import { Card } from "../card";
 
 export type ScreenPlaceholderProps = {
   title: string;

@@ -1,4 +1,4 @@
-import { ScreenPlaceholder } from "../../../layouts";
+import { ScreenPlaceholder } from "../../../components";
 
 /** ユーザー一覧。UI 本体は #22 で実装する。 */
 export function UserListScreen() {

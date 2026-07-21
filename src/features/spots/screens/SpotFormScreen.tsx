@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { ScreenPlaceholder } from "../../../layouts";
+import { ScreenPlaceholder } from "../../../components";
 
 /** スポットの新規追加・編集フォーム。UI 本体は #21 で実装する。 */
 export function SpotFormScreen() {

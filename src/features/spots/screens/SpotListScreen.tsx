@@ -1,4 +1,4 @@
-import { ScreenPlaceholder } from "../../../layouts";
+import { ScreenPlaceholder } from "../../../components";
 
 /** スポット一覧。UI 本体は #21 で実装する。 */
 export function SpotListScreen() {
