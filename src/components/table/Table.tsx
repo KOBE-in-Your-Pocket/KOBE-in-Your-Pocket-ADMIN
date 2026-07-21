@@ -70,7 +70,8 @@ export function Table<T>({
             <tr>
               <td className={styles.stateCell} colSpan={colCount}>
                 <span className={styles.stateInner}>
-                  <Spinner size="sm" />
+                  {/* 隣に「読み込み中…」があるため二重読み上げを避ける */}
+                  <Spinner size="sm" label={null} />
                   読み込み中…
                 </span>
               </td>

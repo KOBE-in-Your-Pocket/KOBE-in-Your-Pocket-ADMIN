@@ -36,10 +36,11 @@ export function ConfirmDialog({
 
   return (
     <Modal
-      onClose={onClose}
+      // 処理中は閉じるボタンだけでなく Escape / オーバーレイクリックも塞ぐ。
+      // 削除確定の途中でダイアログが消えると状態が不整合になるため。
+      onClose={loading ? () => {} : onClose}
       width={400}
       labelledBy={titleId}
-      // 処理中に閉じるボタンで抜けられないようにする
       showClose={!loading}
     >
       <div className={styles.body}>

@@ -56,7 +56,14 @@ export function Modal({
   }, []);
 
   return createPortal(
-    <div className={styles.overlay} onClick={onClose}>
+    // オーバーレイ自身のクリックだけで閉じる。ダイアログ内で発生して
+    // バブリングしてきたクリックでは閉じない（stopPropagation より堅い）。
+    <div
+      className={styles.overlay}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div
         ref={dialogRef}
         className={styles.dialog}
@@ -66,7 +73,6 @@ export function Modal({
         aria-labelledby={labelledBy}
         aria-label={labelledBy ? undefined : (label ?? "ダイアログ")}
         tabIndex={-1}
-        onClick={(e) => e.stopPropagation()}
       >
         {showClose && (
           <button
