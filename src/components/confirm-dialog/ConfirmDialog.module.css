@@ -1,0 +1,40 @@
+/* 中央寄せの確認ダイアログ（ADMIN-image ConfirmDialog.module.css 準拠） */
+.body {
+  text-align: center;
+}
+
+.iconCircle {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--color-warning-tint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--color-text-heading);
+}
+
+.message {
+  font-size: 13.5px;
+  color: var(--color-text-body);
+  margin: 0 0 6px;
+}
+
+.note {
+  font-size: 13px;
+  color: var(--color-text-subtle);
+  margin: 0 0 22px;
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}

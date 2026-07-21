@@ -1,0 +1,14 @@
+/* 各画面で共通の白いパネル（ADMIN-image Card.module.css 準拠） */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-heading);
+  margin: 0 0 14px;
+}
