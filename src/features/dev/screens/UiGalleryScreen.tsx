@@ -1,11 +1,15 @@
 import { useState } from "react";
 import {
+  Badge,
   Button,
   Card,
   ConfirmDialog,
   Input,
   Modal,
+  Pagination,
+  SearchInput,
   Spinner,
+  StarRating,
   Table,
   type Column,
 } from "../../../components";
@@ -43,6 +47,8 @@ const DEMO_COLUMNS: Column<DemoRow>[] = [
  */
 export function UiGalleryScreen() {
   const [text, setText] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(5);
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -131,6 +137,51 @@ export function UiGalleryScreen() {
           <Spinner size="sm" onDark />
           <Spinner size="md" onDark />
         </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Badge</h2>
+        <div className={styles.row}>
+          <Badge>admin</Badge>
+          <Badge tone="operator">operator</Badge>
+          <Badge tone="success">公開中</Badge>
+          <Badge tone="warning">下書き</Badge>
+          <Badge tone="danger">非公開</Badge>
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>StarRating</h2>
+        <div className={styles.row} style={{ gap: 20 }}>
+          <StarRating rating={5} />
+          <StarRating rating={4.2} showValue />
+          <StarRating rating={3} />
+          <StarRating rating={2.5} />
+          <StarRating rating={0} />
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>SearchInput</h2>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="スポット名で検索"
+          aria-label="スポット名で検索"
+        />
+        <p className="muted" style={{ marginTop: 8 }}>
+          入力値: {search || "（空）"}
+        </p>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Pagination</h2>
+        <p className={styles.caseTitle}>全 20 ページ・現在 {page}</p>
+        <Pagination
+          currentPage={page}
+          totalPages={20}
+          onPageChange={setPage}
+        />
       </section>
 
       <section className={styles.section}>

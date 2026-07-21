@@ -1,0 +1,18 @@
+.stars {
+  display: inline-flex;
+  white-space: nowrap;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.full {
+  color: var(--color-warning);
+}
+
+.half {
+  color: var(--color-warning-tint);
+}
+
+.empty {
+  color: var(--color-border-subtle);
+}
