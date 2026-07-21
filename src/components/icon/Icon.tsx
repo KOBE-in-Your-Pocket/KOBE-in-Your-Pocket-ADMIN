@@ -41,6 +41,15 @@ export function CloseIcon(props: SvgProps) {
   );
 }
 
+export function SearchIcon(props: SvgProps) {
+  return (
+    <Svg strokeWidth={1.8} {...props}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4-4" />
+    </Svg>
+  );
+}
+
 export function WarningIcon(props: SvgProps) {
   return (
     <Svg strokeWidth={2} {...props}>

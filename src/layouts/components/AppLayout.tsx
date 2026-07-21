@@ -1,5 +1,5 @@
 import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
-import { Button } from "../../components";
+import { Badge, Button } from "../../components";
 import { useAuth } from "../../features/auth";
 import { ROUTES } from "../../routes/paths";
 
@@ -24,7 +24,9 @@ export function AppLayout() {
         <header className="app-header">
           <span className="muted">{user?.name ?? "未ログイン"}</span>
           {user !== null && (
-            <span className="role-badge">{user.role}</span>
+            <Badge tone={user.role === "operator" ? "operator" : "primary"}>
+              {user.role}
+            </Badge>
           )}
           <Button variant="ghost" size="sm" onClick={logout}>
             ログアウト
