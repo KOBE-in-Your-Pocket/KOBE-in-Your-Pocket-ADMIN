@@ -28,8 +28,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          config.model: "gemini/gemini-2.5-flash"
+          # gemini-2.5-flash は新規キーで廃止済み（404）。現行の flash 系を使う。
+          config.model: "gemini/gemini-flash-latest"
           config.fallback_models: '["gemini/gemini-2.0-flash"]'
+          # gemini-flash-latest は PR-Agent の既定モデル表に無いため上限を明示する
+          config.custom_model_max_tokens: "1000000"
           github_action_config.auto_review: "true"
           github_action_config.auto_describe: "false"
           github_action_config.auto_improve: "false"
