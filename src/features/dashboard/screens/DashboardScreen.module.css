@@ -21,6 +21,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  /* 数値(22px)がカード幅を超えても折り返さず収まるようにする */
+  min-width: 0;
 }
 
 .statIcon {
@@ -136,6 +138,13 @@
   }
 
   .panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* スマホ幅では統計カードを1列にして横はみ出しを防ぐ */
+@media (max-width: 640px) {
+  .statGrid {
     grid-template-columns: 1fr;
   }
 }

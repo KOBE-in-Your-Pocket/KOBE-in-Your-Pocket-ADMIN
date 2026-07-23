@@ -42,10 +42,25 @@ export type RecentAction = {
   what: string;
 };
 
+/** YYYY/MM/DD HH:mm 形式に整形する。 */
+function formatAt(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/** 現在時刻から minutesAgo 分前の日時文字列。 */
+function minutesAgo(minutes: number): string {
+  return formatAt(new Date(Date.now() - minutes * 60_000));
+}
+
+/**
+ * 「直近5件」が常に現在時刻基準になるよう、固定日時ではなく相対で生成する。
+ * 統計・操作ログ API 未整備のための mock（実 API 化時に差し替え）。
+ */
 export const MOCK_RECENT_ACTIONS: RecentAction[] = [
-  { at: "2024/05/20 14:35", who: "山田 太郎", what: "スポットを編集" },
-  { at: "2024/05/20 11:12", who: "佐藤 花子", what: "レビューを削除" },
-  { at: "2024/05/20 11:03", who: "山田 太郎", what: "マナーを追加" },
-  { at: "2024/05/19 17:45", who: "鈴木 一郎", what: "避難所を編集" },
-  { at: "2024/05/19 09:20", who: "山田 太郎", what: "ユーザーを編集" },
+  { at: minutesAgo(12), who: "山田 太郎", what: "スポットを編集" },
+  { at: minutesAgo(95), who: "佐藤 花子", what: "レビューを削除" },
+  { at: minutesAgo(60 * 5), who: "山田 太郎", what: "マナーを追加" },
+  { at: minutesAgo(60 * 26), who: "鈴木 一郎", what: "避難所を編集" },
+  { at: minutesAgo(60 * 32), who: "山田 太郎", what: "ユーザーを編集" },
 ];
