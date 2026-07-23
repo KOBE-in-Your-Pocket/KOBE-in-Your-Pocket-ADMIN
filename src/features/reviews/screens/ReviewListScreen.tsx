@@ -9,10 +9,9 @@ import {
   StarRating,
   Table,
 } from "../../../components";
+import { DEFAULT_PAGE_SIZE } from "../../../lib/constants";
 import { MOCK_REVIEWS, RATINGS, type MockReview } from "../mock-reviews";
 import styles from "./ReviewListScreen.module.css";
-
-const PAGE_SIZE = 10;
 
 export function ReviewListScreen() {
   // mock のため一覧はローカル state。削除のみ反映。削除 API は Backend #86。
@@ -41,12 +40,12 @@ export function ReviewListScreen() {
     [reviews, spot, rating, search],
   );
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const totalPages = Math.ceil(filtered.length / DEFAULT_PAGE_SIZE);
   // 削除で件数が減ると page が totalPages を超えて空表示になるため、有効範囲へ丸める。
   const currentPage = Math.min(page, Math.max(totalPages, 1));
   const pageItems = filtered.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
+    (currentPage - 1) * DEFAULT_PAGE_SIZE,
+    currentPage * DEFAULT_PAGE_SIZE,
   );
 
   const onConfirmDelete = () => {

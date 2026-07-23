@@ -7,12 +7,11 @@ import {
   SearchInput,
   Table,
 } from "../../../components";
+import { DEFAULT_PAGE_SIZE } from "../../../lib/constants";
 import { useAuth } from "../../auth";
 import { UserDeleteDialog } from "../components/UserDeleteDialog";
 import { MOCK_USERS, type MockUser } from "../mock-users";
 import styles from "./UserListScreen.module.css";
-
-const PAGE_SIZE = 10;
 
 export function UserListScreen() {
   const { user } = useAuth();
@@ -29,12 +28,12 @@ export function UserListScreen() {
     [users, search],
   );
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const totalPages = Math.ceil(filtered.length / DEFAULT_PAGE_SIZE);
   // 削除で件数が減ると page が totalPages を超えて空表示になるため、有効範囲へ丸める。
   const currentPage = Math.min(page, Math.max(totalPages, 1));
   const pageItems = filtered.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
+    (currentPage - 1) * DEFAULT_PAGE_SIZE,
+    currentPage * DEFAULT_PAGE_SIZE,
   );
 
   const onDeleted = (id: string) => {
