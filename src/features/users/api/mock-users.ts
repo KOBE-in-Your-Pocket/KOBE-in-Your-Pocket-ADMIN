@@ -1,9 +1,8 @@
 /**
- * ユーザー管理画面の mock データ。
+ * ユーザー管理の mock 固定データ。
  *
- * 一覧 API（GET /users）は未整備で Backend #151 で起票済み。
- * 実 API 接続は #34、削除 API 接続（2段階確認）は #35。
- * mock データ層の整備は #26。
+ * 画面は直接 import せず、`users-api` の `listUsers()` 経由で参照する。
+ * 一覧 API（GET /users）は Backend #151、実 API 接続は #34、削除（2段階確認）は #35。
  */
 export type MockUser = {
   id: string;

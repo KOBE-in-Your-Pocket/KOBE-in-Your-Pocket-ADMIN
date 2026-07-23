@@ -1,9 +1,9 @@
 /**
- * レビュー管理画面の mock データ。
+ * レビュー管理の mock 固定データ。
  *
- * 一覧 API（GET /spots/{spotId}/reviews）は有（接続は未 Issue）。
- * レビュー削除 API（DELETE .../reviews/{id}）は Backend #86 で起票済み。
- * mock データ層の整備は #26。
+ * 画面は直接 import せず、`reviews-api` の `listReviews()` 経由で参照する。
+ * 実 API 接続時はこのモジュールを差し替える（一覧 GET は Backend 有・接続は未 Issue、
+ * 削除 DELETE は Backend #86）。
  */
 export type MockReview = {
   id: string;

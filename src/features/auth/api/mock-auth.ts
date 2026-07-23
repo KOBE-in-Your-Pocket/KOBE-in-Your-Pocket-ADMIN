@@ -1,5 +1,5 @@
-import type { AuthUser } from "./AuthProvider";
-import { ROUTES } from "../../routes/paths";
+import type { AuthUser } from "../AuthProvider";
+import { ROUTES } from "../../../routes/paths";
 
 type MockAccount = AuthUser & { email: string; password: string };
 
@@ -7,7 +7,7 @@ type MockAccount = AuthUser & { email: string; password: string };
  * mock 認証用のアカウント。
  *
  * Backend の認証 API が未接続のため、メールアドレス+パスワードで判定する。
- * 実 API 化は #30、api クライアント連携は #27 で差し替える。
+ * 実 API 化は #30、api クライアント連携は #27 で `auth-api` 側へ差し替える。
  */
 export const MOCK_ACCOUNTS: MockAccount[] = [
   {

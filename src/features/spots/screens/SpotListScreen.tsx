@@ -17,17 +17,17 @@ import { ROUTES, spotEditPath } from "../../../routes/paths";
 import {
   GENRE_LABELS,
   GENRES,
-  MOCK_SPOTS,
+  listSpots,
   type Genre,
   type MockSpot,
-} from "../mock-spots";
+} from "../api/spots-api";
 import styles from "./SpotListScreen.module.css";
 
 export function SpotListScreen() {
   const navigate = useNavigate();
 
   // mock のため一覧はローカル state。削除のみ反映（保存は非永続）。実 API は #32。
-  const [spots, setSpots] = useState<MockSpot[]>(MOCK_SPOTS);
+  const [spots, setSpots] = useState<MockSpot[]>(listSpots);
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState<Genre | "all">("all");
   const [page, setPage] = useState(1);

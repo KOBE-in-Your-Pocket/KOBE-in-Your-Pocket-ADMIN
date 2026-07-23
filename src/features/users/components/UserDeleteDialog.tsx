@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 import { Button, ConfirmDialog, Modal } from "../../../components";
-import type { MockUser } from "../mock-users";
+import type { MockUser } from "../api/users-api";
 import styles from "./UserDeleteDialog.module.css";
 
 export type UserDeleteDialogProps = {

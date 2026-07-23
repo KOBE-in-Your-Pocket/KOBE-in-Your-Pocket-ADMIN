@@ -2,7 +2,7 @@ import { useId, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, EyeIcon, EyeOffIcon } from "../../../components";
 import { useAuth } from "../AuthProvider";
-import { authenticate, landingPath } from "../mock-auth";
+import { authenticate, landingPath } from "../api/mock-auth";
 import styles from "./LoginScreen.module.css";
 
 /**

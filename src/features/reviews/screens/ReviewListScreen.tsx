@@ -10,12 +10,12 @@ import {
   Table,
 } from "../../../components";
 import { DEFAULT_PAGE_SIZE } from "../../../lib/constants";
-import { MOCK_REVIEWS, RATINGS, type MockReview } from "../mock-reviews";
+import { RATINGS, listReviews, type MockReview } from "../api/reviews-api";
 import styles from "./ReviewListScreen.module.css";
 
 export function ReviewListScreen() {
   // mock のため一覧はローカル state。削除のみ反映。削除 API は Backend #86。
-  const [reviews, setReviews] = useState<MockReview[]>(MOCK_REVIEWS);
+  const [reviews, setReviews] = useState<MockReview[]>(listReviews);
   const [spot, setSpot] = useState("all");
   const [rating, setRating] = useState("all");
   const [search, setSearch] = useState("");
