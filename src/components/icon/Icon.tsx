@@ -163,6 +163,16 @@ export function UploadIcon(props: SvgProps) {
   );
 }
 
+/** 「準備中」セクションのアイコン。 */
+export function ToolboxIcon(props: SvgProps) {
+  return (
+    <Svg strokeWidth={1.5} {...props}>
+      <path d="M22 12h-6l-2 3h-4l-2-3H2" />
+      <path d="M5.5 5.5 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.5A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.5z" />
+    </Svg>
+  );
+}
+
 /** 一覧が空のときの空状態アイコン。 */
 export function EmptyBoxIcon(props: SvgProps) {
   return (
