@@ -7,6 +7,7 @@ import {
   type RouteObject,
 } from "react-router-dom";
 import { AuthProvider, LoginScreen, useAuth } from "../features/auth";
+import { landingPath } from "../features/auth/mock-auth";
 import { BlankScreen } from "../features/blank";
 import { DashboardScreen } from "../features/dashboard";
 import { ReviewListScreen } from "../features/reviews";
@@ -17,10 +18,10 @@ import { createQueryClient } from "../lib/query-client";
 import { AdminGuard, AuthGuard } from "./guards";
 import { DEV_ROUTES, ROUTE_PATTERNS, ROUTES } from "./paths";
 
-/** ログイン済みなら /login を出さずダッシュボードへ送る。 */
+/** ログイン済みなら /login を出さずロールの初期画面へ送る。 */
 function LoginRoute() {
-  const { isAuthenticated } = useAuth();
-  if (isAuthenticated) return <Navigate to={ROUTES.dashboard} replace />;
+  const { user } = useAuth();
+  if (user !== null) return <Navigate to={landingPath(user.role)} replace />;
   return <LoginScreen />;
 }
 
