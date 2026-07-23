@@ -111,3 +111,37 @@ export function EyeOffIcon(props: SvgProps) {
     </Svg>
   );
 }
+
+export function UsersIcon(props: SvgProps) {
+  return (
+    <Svg {...props}>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M22 21v-2a4 4 0 0 0-3-3.87" />
+    </Svg>
+  );
+}
+
+export function UserPlusIcon(props: SvgProps) {
+  return (
+    <Svg {...props}>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M19 8v6 M22 11h-6" />
+    </Svg>
+  );
+}
+
+/** スポットのサムネイル・地図ピン。 */
+export function PinIcon(props: SvgProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z" />
+      <circle cx="12" cy="10" r="2.4" />
+    </Svg>
+  );
+}
+
+export function ChatIcon(props: SvgProps) {
+  return (
+    <Svg {...props}>
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </Svg>
+  );
+}
