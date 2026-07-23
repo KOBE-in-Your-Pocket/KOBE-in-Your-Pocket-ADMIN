@@ -30,7 +30,12 @@ export function UserListScreen() {
   );
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  // 削除で件数が減ると page が totalPages を超えて空表示になるため、有効範囲へ丸める。
+  const currentPage = Math.min(page, Math.max(totalPages, 1));
+  const pageItems = filtered.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   const onDeleted = (id: string) => {
     setUsers((prev) => prev.filter((u) => u.id !== id));
@@ -103,7 +108,7 @@ export function UserListScreen() {
         />
 
         <Pagination
-          currentPage={page}
+          currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setPage}
         />
