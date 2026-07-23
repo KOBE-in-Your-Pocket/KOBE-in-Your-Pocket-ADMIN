@@ -11,6 +11,7 @@ export {
   PinIcon,
   PlusIcon,
   SearchIcon,
+  ToolboxIcon,
   UploadIcon,
   UserPlusIcon,
   UsersIcon,

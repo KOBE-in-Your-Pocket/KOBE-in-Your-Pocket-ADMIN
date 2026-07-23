@@ -7,7 +7,6 @@ export * from "./icon";
 export * from "./input";
 export * from "./modal";
 export * from "./pagination";
-export * from "./screen-placeholder";
 export * from "./search-input";
 export * from "./spinner";
 export * from "./star-rating";
