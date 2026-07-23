@@ -145,3 +145,31 @@ export function ChatIcon(props: SvgProps) {
     </Svg>
   );
 }
+
+export function PlusIcon(props: SvgProps) {
+  return (
+    <Svg strokeWidth={2} {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </Svg>
+  );
+}
+
+export function UploadIcon(props: SvgProps) {
+  return (
+    <Svg strokeWidth={1.5} {...props}>
+      <path d="M4 14.9A5 5 0 0 1 6 5a6.5 6.5 0 0 1 12.3 2A4.5 4.5 0 0 1 18 16" />
+      <path d="M12 12v9M8 15l4-4 4 4" />
+    </Svg>
+  );
+}
+
+/** 一覧が空のときの空状態アイコン。 */
+export function EmptyBoxIcon(props: SvgProps) {
+  return (
+    <Svg strokeWidth={1.4} {...props}>
+      <path d="M21 8v13H3V8" />
+      <path d="M1 3h22v5H1z" />
+      <path d="M10 12h4" />
+    </Svg>
+  );
+}
