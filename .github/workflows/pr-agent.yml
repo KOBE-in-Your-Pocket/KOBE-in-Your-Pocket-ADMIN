@@ -1,7 +1,8 @@
 name: PR Agent
 
 # CodeRabbit と併用する二次レビュー。
-# 自動実行は /review のみ。/describe・/improve は PR コメントで手動実行する。
+# 自動実行は /review（見取り図）と /improve（行単位のコード提案）。
+# /describe は PR コメントで手動実行する。
 # synchronize は PR-Agent 既定の pr_actions に含まれず空振りするため入れない。
 # push のたびに再レビューしたい場合は PR コメントで /review を送る。
 #
@@ -35,5 +36,6 @@ jobs:
           config.custom_model_max_tokens: "1000000"
           github_action_config.auto_review: "true"
           github_action_config.auto_describe: "false"
-          github_action_config.auto_improve: "false"
+          # 行単位のコード改善提案（Code Suggestions）も自動投稿する
+          github_action_config.auto_improve: "true"
           github_action_config.pr_actions: '["opened", "reopened", "ready_for_review"]'
