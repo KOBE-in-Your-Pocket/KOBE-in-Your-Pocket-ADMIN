@@ -8,11 +8,11 @@ import {
   type SvgProps,
 } from "../../../components";
 import {
-  MOCK_POPULAR_SPOTS,
-  MOCK_RECENT_ACTIONS,
-  MOCK_STATS,
+  getPopularSpots,
+  getRecentActions,
+  getStats,
   type StatKey,
-} from "../mock-dashboard";
+} from "../api/dashboard-api";
 import styles from "./DashboardScreen.module.css";
 
 /** 指標カードごとのアイコンと配色。tint は tokens に無い色のためリテラル。 */
@@ -27,12 +27,16 @@ const STAT_STYLES: Record<
 };
 
 export function DashboardScreen() {
+  const stats = getStats();
+  const popularSpots = getPopularSpots();
+  const recentActions = getRecentActions();
+
   return (
     <>
       <h1 className={styles.pageTitle}>ダッシュボード</h1>
 
       <div className={styles.statGrid}>
-        {MOCK_STATS.map((stat) => {
+        {stats.map((stat) => {
           const { Icon, color, tint } = STAT_STYLES[stat.key];
           return (
             <div key={stat.key} className={styles.statCard}>
@@ -54,7 +58,7 @@ export function DashboardScreen() {
       <div className={styles.panels}>
         <Card title="人気スポット Top 5（レビュー数）">
           <div className={styles.rankList}>
-            {MOCK_POPULAR_SPOTS.map((spot) => (
+            {popularSpots.map((spot) => (
               <div key={spot.rank} className={styles.rankRow}>
                 <span
                   className={styles.rankBadge}
@@ -71,7 +75,7 @@ export function DashboardScreen() {
 
         <Card title="最近の操作（直近5件）">
           <div className={styles.actionList}>
-            {MOCK_RECENT_ACTIONS.map((action) => (
+            {recentActions.map((action) => (
               <div
                 key={`${action.at}-${action.what}`}
                 className={styles.actionRow}

@@ -1,10 +1,10 @@
-import type { LangKey } from "../../types";
+import type { LangKey } from "../../../types";
 
 /**
- * スポット管理画面の mock データと定数。
+ * スポット管理の mock 固定データと定数。
  *
+ * 画面は直接 import せず、`spots-api` の `listSpots()` / `getSpot()` 経由で参照する。
  * 実 API 接続は #32（一覧）/ #33（追加）、Backend のスポット編集は #152。
- * mock データ層の整備は #26。それまではこのモジュールを使う。
  */
 
 export type Genre = "landmark" | "nature" | "history" | "gourmet" | "onsen";

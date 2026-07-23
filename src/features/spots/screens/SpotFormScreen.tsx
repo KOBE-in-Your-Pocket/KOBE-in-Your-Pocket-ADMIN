@@ -7,9 +7,9 @@ import {
   GENRE_LABELS,
   GENRES,
   LANGS,
-  MOCK_SPOTS,
+  getSpot,
   type Genre,
-} from "../mock-spots";
+} from "../api/spots-api";
 import styles from "./SpotFormScreen.module.css";
 
 const EMPTY_LOCALIZED: Localized<string> = { ja: "", en: "", zh: "", ko: "" };
@@ -31,7 +31,7 @@ export function SpotFormScreen() {
   const { id } = useParams();
 
   const isEdit = id !== undefined;
-  const editing = isEdit ? MOCK_SPOTS.find((s) => s.id === id) : undefined;
+  const editing = id !== undefined ? getSpot(id) : undefined;
 
   const genreId = useId();
   const latId = useId();

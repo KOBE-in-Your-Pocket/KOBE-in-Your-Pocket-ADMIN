@@ -1,7 +1,8 @@
 /**
- * ダッシュボードの mock データ。
+ * ダッシュボードの mock 固定データ。
  *
- * 統計 API（GET /stats 相当）は未整備のため固定値。実 API 化時に差し替える。
+ * 画面は直接 import せず、`dashboard-api` の getter 経由で参照する。
+ * 統計・操作ログ API（GET /stats 相当）は未整備のため固定値。実 API 化時に差し替える。
  */
 
 export type StatKey = "users" | "spots" | "reviews" | "new-users";

@@ -6,8 +6,7 @@ import {
   RouterProvider,
   type RouteObject,
 } from "react-router-dom";
-import { AuthProvider, LoginScreen, useAuth } from "../features/auth";
-import { landingPath } from "../features/auth/mock-auth";
+import { AuthProvider, LoginScreen, landingPath, useAuth } from "../features/auth";
 import { BlankScreen } from "../features/blank";
 import { DashboardScreen } from "../features/dashboard";
 import { ReviewListScreen } from "../features/reviews";
