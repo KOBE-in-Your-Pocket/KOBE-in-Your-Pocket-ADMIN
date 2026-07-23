@@ -1,6 +1,7 @@
 export {
   BellIcon,
   CloseIcon,
+  LockIcon,
   LogoutIcon,
   PathIcon,
   SearchIcon,

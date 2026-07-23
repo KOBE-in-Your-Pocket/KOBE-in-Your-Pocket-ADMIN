@@ -26,12 +26,3 @@ export function AppLayout() {
 export function RootRedirect() {
   return <Navigate to={ROUTES.dashboard} replace />;
 }
-
-export function ForbiddenScreen() {
-  return (
-    <section className={styles.forbidden}>
-      <h1>403 — 権限がありません</h1>
-      <p className="muted">この操作には admin ロールが必要です。</p>
-    </section>
-  );
-}

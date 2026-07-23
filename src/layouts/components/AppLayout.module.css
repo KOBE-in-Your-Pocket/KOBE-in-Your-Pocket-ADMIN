@@ -21,8 +21,3 @@
   color: var(--color-text-faint);
   margin-bottom: 14px;
 }
-
-.forbidden {
-  padding: 48px 28px;
-  text-align: center;
-}
