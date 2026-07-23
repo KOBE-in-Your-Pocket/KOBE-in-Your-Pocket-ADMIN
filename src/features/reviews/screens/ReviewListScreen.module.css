@@ -1,0 +1,33 @@
+.pageTitle {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 18px;
+  color: var(--color-text-heading);
+}
+
+.filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.select {
+  padding: 8px 10px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text-label);
+  background: var(--color-surface);
+}
+
+.comment {
+  color: var(--color-text-muted);
+  min-width: 200px;
+}
+
+.rowActions {
+  display: flex;
+  justify-content: flex-end;
+}
