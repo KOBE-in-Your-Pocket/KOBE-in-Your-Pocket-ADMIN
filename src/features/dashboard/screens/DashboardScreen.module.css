@@ -1,0 +1,141 @@
+/* ADMIN-image pages/dashboard/DashboardPage.module.css 準拠 */
+.pageTitle {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 18px;
+  color: var(--color-text-heading);
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.statCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.statIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--color-text-subtle);
+}
+
+.statValue {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text-heading);
+  line-height: 1.25;
+}
+
+.statDelta {
+  font-size: 12px;
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* 人気スポット Top 5 */
+.rankList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13.5px;
+}
+
+.rankRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.rankRow:last-child {
+  border-bottom: none;
+}
+
+.rankBadge {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.rankName {
+  flex: 1;
+  color: var(--color-text-heading);
+}
+
+.rankCount {
+  color: var(--color-text-subtle);
+}
+
+/* 最近の操作 */
+.actionList {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+}
+
+.actionRow {
+  display: grid;
+  grid-template-columns: 132px 78px 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.actionRow:last-child {
+  border-bottom: none;
+}
+
+.actionAt {
+  color: var(--color-text-faint);
+}
+
+.actionWho {
+  color: var(--color-text-muted);
+}
+
+.actionWhat {
+  color: var(--color-text-heading);
+}
+
+@media (max-width: 1100px) {
+  .statGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .panels {
+    grid-template-columns: 1fr;
+  }
+}
