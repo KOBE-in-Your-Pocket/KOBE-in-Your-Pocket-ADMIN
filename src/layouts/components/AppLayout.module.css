@@ -1,0 +1,28 @@
+/* ADMIN-image widgets/app-shell/AppShell.module.css 準拠 */
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+}
+
+.main {
+  flex: 1;
+  padding: 24px 28px;
+  min-width: 0;
+}
+
+.crumb {
+  font-size: 12px;
+  color: var(--color-text-faint);
+  margin-bottom: 14px;
+}
+
+.forbidden {
+  padding: 48px 28px;
+  text-align: center;
+}
