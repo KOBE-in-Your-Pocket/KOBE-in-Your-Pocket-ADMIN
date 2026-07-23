@@ -93,3 +93,21 @@ export function LockIcon(props: SvgProps) {
     </Svg>
   );
 }
+
+export function EyeIcon(props: SvgProps) {
+  return (
+    <Svg strokeWidth={1.8} {...props}>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </Svg>
+  );
+}
+
+export function EyeOffIcon(props: SvgProps) {
+  return (
+    <Svg strokeWidth={1.8} {...props}>
+      <path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 7 10 7a13.2 13.2 0 0 1-1.67 2.68M6.6 6.6A13.3 13.3 0 0 0 2 11s3.5 7 10 7a9.1 9.1 0 0 0 3.4-.66" />
+      <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2M1 1l22 22" />
+    </Svg>
+  );
+}

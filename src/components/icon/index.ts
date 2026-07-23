@@ -1,6 +1,8 @@
 export {
   BellIcon,
   CloseIcon,
+  EyeIcon,
+  EyeOffIcon,
   LockIcon,
   LogoutIcon,
   PathIcon,

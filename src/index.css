@@ -12,9 +12,3 @@ body {
   color: var(--color-text-subtle);
 }
 
-.auth-screen {
-  margin: 0 auto;
-  max-width: 28rem;
-  padding: 4rem 1.5rem;
-  text-align: center;
-}
