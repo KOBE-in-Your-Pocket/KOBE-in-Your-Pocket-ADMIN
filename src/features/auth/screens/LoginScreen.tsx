@@ -79,6 +79,7 @@ export function LoginScreen() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="admin@example.com"
             autoComplete="username"
+            required
             disabled={loading}
           />
 
@@ -93,6 +94,7 @@ export function LoginScreen() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
+              required
               disabled={loading}
             />
             <button
@@ -129,14 +131,20 @@ export function LoginScreen() {
   );
 }
 
-/** ログイン失敗の例外をユーザー向け文言に変換する。 */
+/** ログイン失敗の例外をユーザー向け文言に変換する（Backend の生メッセージは出さない）。 */
 function loginErrorMessage(error: unknown): string {
   if (isApiError(error)) {
-    // 401 は Spring Security の既定応答で本文が空になるため、認証失敗の定型文にする。
-    if (error.isUnauthorized) {
+    // 入力バリデーション（空・形式不正）。
+    if (error.violations.length > 0) {
+      return "メールアドレスとパスワードを正しく入力してください。";
+    }
+    // 認証失敗。GoTrue は資格情報不一致を 400(invalid_grant)、Spring は未認証を 401 で
+    // 返すため、どちらも同じ定型文にする（生の error/コードは露出させない）。
+    if (error.status === 400 || error.status === 401) {
       return "メールアドレスまたはパスワードが正しくありません。";
     }
-    return error.message;
+    // 5xx / 502 など。
+    return "ログインに失敗しました。時間をおいて再度お試しください。";
   }
   if (isNetworkError(error)) {
     return error.message;
