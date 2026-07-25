@@ -1,40 +1,57 @@
 import { useId, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, EyeIcon, EyeOffIcon } from "../../../components";
+import { isApiError, isNetworkError } from "../../../api";
 import logoUrl from "../../../assets/logo/kobe-in-your-pocket.png";
+import { Button, EyeIcon, EyeOffIcon } from "../../../components";
+import { isAdminConsoleRole } from "../../../types";
+import { login as loginRequest } from "../api/auth-api";
 import { useAuth } from "../AuthProvider";
-import { authenticate, landingPath } from "../api/mock-auth";
+import { landingPath } from "../landing";
 import styles from "./LoginScreen.module.css";
 
 /**
- * ログイン画面（mock）。ADMIN-image pages/login 準拠。
+ * ログイン画面。Backend `/api/v1/auth/login` で認証する。
  *
- * 認証は mock-auth.authenticate で行う。実 API 化は #30、
- * api クライアント連携は #27、JWT 保存は #28 で差し替える。
+ * 成功時は establishSession がトークンを保存しロールを JWT から解決する。
+ * 管理画面は operator/admin のみ利用可能で、general は権限エラーにする。
  */
 export function LoginScreen() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { establishSession, logout } = useAuth();
 
-  // API 未接続のため、デモ用の初期値を入れている。
-  const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const emailId = useId();
   const passwordId = useId();
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const user = authenticate(email, password);
-    if (!user) {
-      setError(true);
-      return;
+    if (loading) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const session = await loginRequest({ email, password });
+      const user = establishSession(session);
+      if (user === null) {
+        setError("ログインに失敗しました。もう一度お試しください。");
+        return;
+      }
+      if (!isAdminConsoleRole(user.role)) {
+        // 一般ユーザーは管理画面を利用できない。確立したセッションは破棄する。
+        logout();
+        setError("この画面を利用する権限がありません。");
+        return;
+      }
+      navigate(landingPath(user.role), { replace: true });
+    } catch (err) {
+      setError(loginErrorMessage(err));
+    } finally {
+      setLoading(false);
     }
-    setError(false);
-    login(user);
-    navigate(landingPath(user.role), { replace: true });
   };
 
   return (
@@ -62,6 +79,7 @@ export function LoginScreen() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="admin@example.com"
             autoComplete="username"
+            disabled={loading}
           />
 
           <label className={styles.label} htmlFor={passwordId}>
@@ -75,6 +93,7 @@ export function LoginScreen() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
+              disabled={loading}
             />
             <button
               type="button"
@@ -95,26 +114,32 @@ export function LoginScreen() {
             <a href="#">パスワードをお忘れですか？</a>
           </div>
 
-          <Button type="submit" fullWidth>
+          <Button type="submit" fullWidth loading={loading}>
             ログイン
           </Button>
 
-          {error && (
+          {error !== null && (
             <div className={styles.error} role="alert">
-              メールアドレスまたはパスワードが正しくありません。
+              {error}
             </div>
           )}
-
-          <div className={styles.hint}>
-            <strong>デモアカウント（mock）</strong>
-            <br />
-            admin: <code>admin@example.com</code> / operator:{" "}
-            <code>operator@example.com</code>
-            <br />
-            パスワードはどちらも <code>password123</code>
-          </div>
         </form>
       </div>
     </div>
   );
+}
+
+/** ログイン失敗の例外をユーザー向け文言に変換する。 */
+function loginErrorMessage(error: unknown): string {
+  if (isApiError(error)) {
+    // 401 は Spring Security の既定応答で本文が空になるため、認証失敗の定型文にする。
+    if (error.isUnauthorized) {
+      return "メールアドレスまたはパスワードが正しくありません。";
+    }
+    return error.message;
+  }
+  if (isNetworkError(error)) {
+    return error.message;
+  }
+  return "ログインに失敗しました。時間をおいて再度お試しください。";
 }

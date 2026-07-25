@@ -17,8 +17,6 @@ export type AuthUser = {
 type AuthContextValue = {
   user: AuthUser | null;
   isAuthenticated: boolean;
-  /** mock ログイン用。実 API 化（#30）で establishSession に置き換える。 */
-  login: (user: AuthUser) => void;
   /**
    * 実 API のログイン / リフレッシュ結果からセッションを確立する。
    *
@@ -39,7 +37,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       isAuthenticated: user !== null,
-      login: setUser,
       establishSession: (session) => {
         const { accessToken, refreshToken, user: publicUser } = session;
         if (accessToken === null || publicUser === null) return null;
