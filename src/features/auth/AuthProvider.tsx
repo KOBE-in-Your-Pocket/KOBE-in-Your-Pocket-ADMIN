@@ -1,5 +1,12 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+  clearAuthTokens,
+  setAccessToken,
+  setRefreshToken,
+} from "../../lib/storage";
+import type { AuthSession } from "../../types";
 import type { Role } from "../../types/role";
+import { roleFromAccessToken } from "./jwt";
 
 export type AuthUser = {
   id: string;
@@ -10,7 +17,16 @@ export type AuthUser = {
 type AuthContextValue = {
   user: AuthUser | null;
   isAuthenticated: boolean;
+  /** mock ログイン用。実 API 化（#30）で establishSession に置き換える。 */
   login: (user: AuthUser) => void;
+  /**
+   * 実 API のログイン / リフレッシュ結果からセッションを確立する。
+   *
+   * アクセス・リフレッシュトークンを保存し、ロールを JWT の `app_metadata.role`
+   * から解決して user を設定する。accessToken か user が欠ける場合は確立せず null。
+   * 管理画面の利用可否（operator/admin）判定は呼び出し側（#30）で行う。
+   */
+  establishSession: (session: AuthSession) => AuthUser | null;
   logout: () => void;
 };
 
@@ -24,7 +40,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isAuthenticated: user !== null,
       login: setUser,
-      logout: () => setUser(null),
+      establishSession: (session) => {
+        const { accessToken, refreshToken, user: publicUser } = session;
+        if (accessToken === null || publicUser === null) return null;
+
+        setAccessToken(accessToken);
+        setRefreshToken(refreshToken);
+
+        const authUser: AuthUser = {
+          id: publicUser.id,
+          name: publicUser.name,
+          role: roleFromAccessToken(accessToken),
+        };
+        setUser(authUser);
+        return authUser;
+      },
+      logout: () => {
+        clearAuthTokens();
+        setUser(null);
+      },
     }),
     [user],
   );
