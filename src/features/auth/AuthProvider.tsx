@@ -1,8 +1,11 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import {
   clearAuthTokens,
+  getAccessToken,
+  getStoredUser,
   setAccessToken,
   setRefreshToken,
+  setStoredUser,
 } from "../../lib/storage";
 import type { AuthSession } from "../../types";
 import type { Role } from "../../types/role";
@@ -13,6 +16,23 @@ export type AuthUser = {
   name: string;
   role: Role;
 };
+
+/**
+ * リロード時に sessionStorage からセッションを復元する。
+ *
+ * 表示情報（id / name）は保存スナップショットから、ロールは正であるアクセス
+ * トークン（JWT）から解決し直す。トークンか保存ユーザーが欠ければ未ログイン扱い。
+ */
+function restoreUser(): AuthUser | null {
+  const token = getAccessToken();
+  const stored = getStoredUser();
+  if (token === null || stored === null) return null;
+  return {
+    id: stored.id,
+    name: stored.name,
+    role: roleFromAccessToken(token),
+  };
+}
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -31,7 +51,8 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  // マウント時に保存済みセッションから同期復元する（リロードでログイン状態を保つ）。
+  const [user, setUser] = useState<AuthUser | null>(restoreUser);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -41,14 +62,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { accessToken, refreshToken, user: publicUser } = session;
         if (accessToken === null || publicUser === null) return null;
 
-        setAccessToken(accessToken);
-        setRefreshToken(refreshToken);
-
         const authUser: AuthUser = {
           id: publicUser.id,
           name: publicUser.name,
           role: roleFromAccessToken(accessToken),
         };
+
+        setAccessToken(accessToken);
+        setRefreshToken(refreshToken);
+        setStoredUser(authUser);
         setUser(authUser);
         return authUser;
       },
