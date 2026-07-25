@@ -22,7 +22,10 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   if (segment === undefined || segment === "") return null;
 
   try {
-    const base64 = segment.replace(/-/g, "+").replace(/_/g, "/");
+    // Base64URL → Base64。JWT payload はパディングを省くため、atob の forgiving
+    // 実装に依存せず末尾 '=' を 4 の倍数長まで補ってから復号する。
+    const normalized = segment.replace(/-/g, "+").replace(/_/g, "/");
+    const base64 = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
     const binary = atob(base64);
     // マルチバイトクレーム（名前・メール等）でも壊れないよう UTF-8 で復号する。
     const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
