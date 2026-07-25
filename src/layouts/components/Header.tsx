@@ -17,7 +17,6 @@ export function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.brand}>
-        {/* デザインのロゴ画像は未取得のためワードマークで代替 */}
         <span className={styles.wordmark}>
           <span className={styles.wordmarkMain}>KOBE</span>
           <span className={styles.wordmarkSub}>in Your Pocket</span>
