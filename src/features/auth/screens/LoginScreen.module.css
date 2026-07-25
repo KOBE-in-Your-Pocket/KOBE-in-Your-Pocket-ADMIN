@@ -16,16 +16,9 @@
   padding: 48px 32px;
 }
 
-.brandName {
-  font: 700 56px/1 var(--font-display);
-  color: var(--color-primary);
-  letter-spacing: 1px;
-}
-
-.brandTagline {
-  font-size: 19px;
-  color: var(--color-primary);
-  font-weight: 500;
+.brandLogo {
+  width: min(70%, 360px);
+  height: auto;
 }
 
 .formPanel {

@@ -1,6 +1,7 @@
 import { useId, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, EyeIcon, EyeOffIcon } from "../../../components";
+import logoUrl from "../../../assets/logo/kobe-in-your-pocket.png";
 import { useAuth } from "../AuthProvider";
 import { authenticate, landingPath } from "../api/mock-auth";
 import styles from "./LoginScreen.module.css";
@@ -39,9 +40,11 @@ export function LoginScreen() {
   return (
     <div className={styles.page}>
       <div className={styles.brandPanel}>
-        {/* ロゴ画像は未取得のためワードマークで代替 */}
-        <div className={styles.brandName}>KOBE</div>
-        <div className={styles.brandTagline}>in Your Pocket</div>
+        <img
+          className={styles.brandLogo}
+          src={logoUrl}
+          alt="KOBE in Your Pocket"
+        />
       </div>
 
       <div className={styles.formPanel}>
