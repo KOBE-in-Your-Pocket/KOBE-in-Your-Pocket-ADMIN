@@ -21,7 +21,7 @@ import {
 } from "../../lib/storage";
 import type { AuthSession } from "../../types";
 import type { Role } from "../../types/role";
-import { refresh } from "./api/auth-api";
+import { logout as apiLogout, refresh } from "./api/auth-api";
 import styles from "./AuthProvider.module.css";
 import { roleFromAccessToken } from "./jwt";
 
@@ -59,7 +59,7 @@ type AuthContextValue = {
    * 欠ける場合は確立せず null。管理画面の利用可否判定は呼び出し側で行う。
    */
   establishSession: (session: AuthSession) => AuthUser | null;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -100,9 +100,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const logout = useCallback(() => {
-    clearAuthTokens();
+  const logout = useCallback(async () => {
+    // 破棄対象のトークンを記録しておく（interceptor が付与するため storage はまだ消さない）。
+    const tokenAtLogout = getAccessToken();
+    // 先に React 状態を破棄してガードを即ログインへ（LoginRoute へのリダイレクト競合を防ぐ）。
     setUser(null);
+    try {
+      // サーバー側トークンを失効させる。Authorization は interceptor が付与するため、
+      // ストレージのトークン破棄はこの呼び出しの後に行う。
+      await apiLogout();
+    } catch {
+      // ベストエフォート：失敗（ネットワーク断・401 等）してもローカルのログアウトは完了させる。
+    } finally {
+      // apiLogout 中に再ログインでトークンが差し替わっていたら破棄しない
+      // （新セッションを消さないための多重ログイン競合対策）。
+      if (getAccessToken() === tokenAtLogout) {
+        clearAuthTokens();
+      }
+    }
   }, []);
 
   // refreshToken でセッションを更新する共通処理（起動時検証 / 401 再試行で共用）。

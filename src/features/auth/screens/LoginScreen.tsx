@@ -42,8 +42,9 @@ export function LoginScreen() {
         return;
       }
       if (!isAdminConsoleRole(user.role)) {
-        // 一般ユーザーは管理画面を利用できない。確立したセッションは破棄する。
-        logout();
+        // 一般ユーザーは管理画面を利用できない。確立したセッションは破棄する
+        // （setUser(null) は同期実行され、サーバー側失効はベストエフォートで後追い）。
+        void logout();
         setError("この画面を利用する権限がありません。");
         return;
       }
