@@ -39,6 +39,38 @@ export function createBearerInterceptor(
   };
 }
 
+/**
+ * 401（アクセストークン失効）時にトークンを更新する処理。
+ *
+ * true を返すと呼び出し元は元リクエストを 1 回だけ再試行する（更新後の
+ * accessToken は interceptor が付与する）。false なら再試行せず 401 のまま。
+ * 実体（refresh 呼び出し・保存・失敗時ログアウト）は上位層が登録する（#79）。
+ */
+type SessionRefresher = () => Promise<boolean>;
+let sessionRefresher: SessionRefresher | null = null;
+
+export function setSessionRefresher(refresher: SessionRefresher | null): void {
+  sessionRefresher = refresher;
+}
+
+// 同時多発する 401 で refresh が多重発火しないよう、進行中の refresh を共有する。
+let refreshInFlight: Promise<boolean> | null = null;
+
+function refreshSession(): Promise<boolean> {
+  if (sessionRefresher === null) return Promise.resolve(false);
+  if (refreshInFlight === null) {
+    refreshInFlight = sessionRefresher().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+/** 認証系エンドポイント自身の 401 は refresh 再試行の対象外（無限ループ防止）。 */
+function isAuthEndpoint(path: string): boolean {
+  return path.includes("/api/v1/auth/");
+}
+
 export async function apiFetch(
   path: string,
   init: RequestInit = {},
@@ -67,6 +99,30 @@ export async function apiRequest<T>(
   path: string,
   init: ApiRequestInit = {},
 ): Promise<T> {
+  let response = await sendRequest(path, init);
+
+  // アクセストークン失効（401）なら refresh して 1 回だけ再試行する。
+  // 認証系（/api/v1/auth/*）自身の 401 は対象外＝無限ループを防ぐ。
+  if (response.status === 401 && !isAuthEndpoint(path)) {
+    const refreshed = await refreshSession();
+    if (refreshed) {
+      // 再送。interceptor が更新後の accessToken を付与する。
+      response = await sendRequest(path, init);
+    }
+  }
+
+  if (!response.ok) {
+    throw await toApiError(response);
+  }
+
+  return (await readJsonBody<T>(response)) as T;
+}
+
+/** ヘッダ・ボディを組み立てて 1 回送信する。fetch 自体の失敗は [NetworkError]。 */
+async function sendRequest(
+  path: string,
+  init: ApiRequestInit,
+): Promise<Response> {
   const { json, ...rest } = init;
   const headers = new Headers(rest.headers);
   headers.set("Accept", "application/json");
@@ -77,21 +133,14 @@ export async function apiRequest<T>(
     body = JSON.stringify(json);
   }
 
-  let response: Response;
   try {
-    response = await apiFetch(path, { ...rest, headers, body });
+    return await apiFetch(path, { ...rest, headers, body });
   } catch (cause) {
     throw new NetworkError(
       "ネットワークに接続できませんでした。通信環境を確認してください。",
       { cause },
     );
   }
-
-  if (!response.ok) {
-    throw await toApiError(response);
-  }
-
-  return (await readJsonBody<T>(response)) as T;
 }
 
 /** 応答本文から ApiError を組み立てる。本文が空・非 JSON でも必ず ApiError を返す。 */
