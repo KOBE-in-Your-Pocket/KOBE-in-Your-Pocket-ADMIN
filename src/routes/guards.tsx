@@ -4,16 +4,17 @@ import { ForbiddenScreen } from "../layouts";
 import { ROUTES } from "./paths";
 
 /**
- * 未ログインならログイン画面へリダイレクトする。
+ * 未ログインならログイン画面へリダイレクトする（dev / prod とも有効）。
  *
- * ログイン後に元の画面へ戻せるよう、遷移元を state.from に載せる（#30 で利用）。
- * dev ビルドでは認可を緩めて開発しやすくしている（本番での有効化は #31）。
+ * ログイン後に元の画面へ戻せるよう、遷移元を state.from に載せる（LoginScreen で利用）。
+ * リロード時のログイン状態は AuthProvider が sessionStorage から同期復元するため、
+ * 復元済みなら弾かれない。
  */
 export function AuthGuard() {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
 
-  if (!isAuthenticated && import.meta.env.PROD) {
+  if (!isAuthenticated) {
     return (
       <Navigate to={ROUTES.login} replace state={{ from: location.pathname }} />
     );
