@@ -137,15 +137,21 @@ export function LoginScreen() {
 /**
  * ガードが載せた遷移元（location.state.from）を安全な内部パスとして取り出す。
  *
- * 内部パス（先頭 "/"、ただし "//" のプロトコル相対は除外）のみ許可し、
- * 外部 URL への誘導（オープンリダイレクト）を防ぐ。該当しなければ null。
+ * 内部パス（先頭 "/"）のみ許可する。"//"（プロトコル相対）と "/\\"（ブラウザが
+ * "//" に正規化しうる）を除外し、外部 URL への誘導（オープンリダイレクト）を防ぐ。
+ * 該当しなければ null。
  */
 function safeInternalPath(state: unknown): string | null {
   if (typeof state !== "object" || state === null || !("from" in state)) {
     return null;
   }
   const from = (state as { from?: unknown }).from;
-  if (typeof from === "string" && from.startsWith("/") && !from.startsWith("//")) {
+  if (
+    typeof from === "string" &&
+    from.startsWith("/") &&
+    !from.startsWith("//") &&
+    !from.startsWith("/\\")
+  ) {
     return from;
   }
   return null;
