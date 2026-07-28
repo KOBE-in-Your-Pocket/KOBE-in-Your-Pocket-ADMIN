@@ -1,5 +1,5 @@
 import { useId, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { isApiError, isNetworkError } from "../../../api";
 import logoUrl from "../../../assets/logo/kobe-in-your-pocket.png";
 import { Button, EyeIcon, EyeOffIcon } from "../../../components";
@@ -17,6 +17,7 @@ import styles from "./LoginScreen.module.css";
  */
 export function LoginScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { establishSession, logout } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -46,7 +47,9 @@ export function LoginScreen() {
         setError("この画面を利用する権限がありません。");
         return;
       }
-      navigate(landingPath(user.role), { replace: true });
+      // ガードで弾かれた元の画面があればそこへ戻す。無ければロール既定の初期画面。
+      const from = safeInternalPath(location.state);
+      navigate(from ?? landingPath(user.role), { replace: true });
     } catch (err) {
       setError(loginErrorMessage(err));
     } finally {
@@ -129,6 +132,23 @@ export function LoginScreen() {
       </div>
     </div>
   );
+}
+
+/**
+ * ガードが載せた遷移元（location.state.from）を安全な内部パスとして取り出す。
+ *
+ * 内部パス（先頭 "/"、ただし "//" のプロトコル相対は除外）のみ許可し、
+ * 外部 URL への誘導（オープンリダイレクト）を防ぐ。該当しなければ null。
+ */
+function safeInternalPath(state: unknown): string | null {
+  if (typeof state !== "object" || state === null || !("from" in state)) {
+    return null;
+  }
+  const from = (state as { from?: unknown }).from;
+  if (typeof from === "string" && from.startsWith("/") && !from.startsWith("//")) {
+    return from;
+  }
+  return null;
 }
 
 /** ログイン失敗の例外をユーザー向け文言に変換する（Backend の生メッセージは出さない）。 */
