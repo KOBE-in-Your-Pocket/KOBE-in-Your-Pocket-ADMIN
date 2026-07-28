@@ -101,6 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
+    // 破棄対象のトークンを記録しておく（interceptor が付与するため storage はまだ消さない）。
+    const tokenAtLogout = getAccessToken();
     // 先に React 状態を破棄してガードを即ログインへ（LoginRoute へのリダイレクト競合を防ぐ）。
     setUser(null);
     try {
@@ -110,7 +112,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // ベストエフォート：失敗（ネットワーク断・401 等）してもローカルのログアウトは完了させる。
     } finally {
-      clearAuthTokens();
+      // apiLogout 中に再ログインでトークンが差し替わっていたら破棄しない
+      // （新セッションを消さないための多重ログイン競合対策）。
+      if (getAccessToken() === tokenAtLogout) {
+        clearAuthTokens();
+      }
     }
   }, []);
 
