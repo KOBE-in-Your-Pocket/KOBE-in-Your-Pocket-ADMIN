@@ -1,12 +1,25 @@
+import { isRole, type Role } from "../types/role";
+
 /**
- * 認証トークンの永続化。
+ * 認証セッションの永続化。
  *
  * タブを閉じたら破棄したいので sessionStorage を使う（localStorage にはしない）。
- * - accessToken: 全 API リクエストの `Authorization` に載る（本ファイル + interceptor）。
- * - refreshToken: accessToken 失効時の再取得に使う（auth-api.refresh / #29）。
+ * リロード（同一タブ）では保持されるため、ページ再読込後もログイン状態を復元できる。
+ * - accessToken: 全 API リクエストの `Authorization` に載る（interceptor）。
+ * - refreshToken: accessToken 失効時の再取得に使う。
+ * - user: リロード時に表示情報（id / name）を即時復元するためのスナップショット。
+ *   ロールの正はあくまで JWT なので、復元時はトークンから解決し直す。
  */
 const ACCESS_TOKEN_KEY = "admin.accessToken";
 const REFRESH_TOKEN_KEY = "admin.refreshToken";
+const USER_KEY = "admin.user";
+
+/** 復元用に保存する最小ユーザー情報。 */
+export type StoredUser = {
+  id: string;
+  name: string;
+  role: Role;
+};
 
 export function getAccessToken(): string | null {
   return sessionStorage.getItem(ACCESS_TOKEN_KEY);
@@ -24,10 +37,41 @@ export function setRefreshToken(token: string | null): void {
   writeOrRemove(REFRESH_TOKEN_KEY, token);
 }
 
-/** アクセス・リフレッシュ両トークンを破棄する（ログアウト・認証失敗時）。 */
+export function getStoredUser(): StoredUser | null {
+  const raw = sessionStorage.getItem(USER_KEY);
+  if (raw === null) return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return null;
+    const { id, name, role } = parsed as Record<string, unknown>;
+    // role は有効な Role 値のときだけ受理する（型の契約を保つ）。
+    if (
+      typeof id === "string" &&
+      typeof name === "string" &&
+      typeof role === "string" &&
+      isRole(role)
+    ) {
+      return { id, name, role };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredUser(user: StoredUser | null): void {
+  if (user === null) {
+    sessionStorage.removeItem(USER_KEY);
+    return;
+  }
+  sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+}
+
+/** セッション（トークン＋保存ユーザー）を破棄する。ログアウト・認証失敗時に使う。 */
 export function clearAuthTokens(): void {
   setAccessToken(null);
   setRefreshToken(null);
+  setStoredUser(null);
 }
 
 function writeOrRemove(key: string, value: string | null): void {
