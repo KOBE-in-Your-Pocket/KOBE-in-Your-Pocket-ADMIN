@@ -21,7 +21,7 @@ import {
 } from "../../lib/storage";
 import type { AuthSession } from "../../types";
 import type { Role } from "../../types/role";
-import { refresh } from "./api/auth-api";
+import { logout as apiLogout, refresh } from "./api/auth-api";
 import styles from "./AuthProvider.module.css";
 import { roleFromAccessToken } from "./jwt";
 
@@ -59,7 +59,7 @@ type AuthContextValue = {
    * 欠ける場合は確立せず null。管理画面の利用可否判定は呼び出し側で行う。
    */
   establishSession: (session: AuthSession) => AuthUser | null;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -100,9 +100,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const logout = useCallback(() => {
-    clearAuthTokens();
+  const logout = useCallback(async () => {
+    // 先に React 状態を破棄してガードを即ログインへ（LoginRoute へのリダイレクト競合を防ぐ）。
     setUser(null);
+    try {
+      // サーバー側トークンを失効させる。Authorization は interceptor が付与するため、
+      // ストレージのトークン破棄はこの呼び出しの後に行う。
+      await apiLogout();
+    } catch {
+      // ベストエフォート：失敗（ネットワーク断・401 等）してもローカルのログアウトは完了させる。
+    } finally {
+      clearAuthTokens();
+    }
   }, []);
 
   // 起動時に refreshToken でセッションを検証・更新する（StrictMode の二重実行を ref で防ぐ）。

@@ -1,17 +1,18 @@
-import { useNavigate } from "react-router-dom";
+import { useRef } from "react";
 import { Badge, BellIcon, Button, LogoutIcon } from "../../components";
 import { useAuth } from "../../features/auth";
-import { ROUTES } from "../../routes/paths";
 import styles from "./Header.module.css";
 
 /** 上部ヘッダー。ブランド・タイトル・ユーザー情報・ログアウト。 */
 export function Header() {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  // 二重押下防止。logout は user を即 null にし、AuthGuard がログイン画面へ遷移させる。
+  const loggingOut = useRef(false);
 
   const onLogout = () => {
-    logout();
-    navigate(ROUTES.login, { replace: true });
+    if (loggingOut.current) return;
+    loggingOut.current = true;
+    void logout();
   };
 
   return (
