@@ -106,7 +106,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // refreshToken でセッションを更新する共通処理（起動時検証 / 401 再試行で共用）。
-  // 成功で true。失効・不正（ApiError）はセッション破棄、ネットワーク断は破棄せず false。
+  // 成功で true。失効・不正（401/403）はセッション破棄、それ以外の失敗（サーバー
+  // 一時エラー・ネットワーク断）は一時障害としてセッションを維持し false を返す。
   const refreshSession = useCallback(async (): Promise<boolean> => {
     const refreshToken = getRefreshToken();
     if (refreshToken === null) {
@@ -118,7 +119,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const session = await refresh(refreshToken);
       return establishSession(session) !== null;
     } catch (error) {
-      if (isApiError(error)) {
+      // 401/403 のみ「トークンが本当に失効した」と判断してセッションを破棄する。
+      // 500 等の一時エラーで有効なセッションを壊さないため対象を絞る。
+      if (isApiError(error) && (error.status === 401 || error.status === 403)) {
         clearAuthTokens();
         setUser(null);
       }
