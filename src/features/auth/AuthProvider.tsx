@@ -75,7 +75,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const establishSession = useCallback(
     (session: AuthSession): AuthUser | null => {
       const { accessToken, refreshToken, user: publicUser } = session;
-      if (accessToken === null || publicUser === null) return null;
+      // 3 点が揃わない不完全なセッションは確立しない。特に refreshToken を null で
+      // 上書き保存すると以降の起動時 refresh が成立しなくなるため弾く。
+      if (
+        accessToken === null ||
+        refreshToken === null ||
+        publicUser === null
+      ) {
+        return null;
+      }
 
       const authUser: AuthUser = {
         id: publicUser.id,
