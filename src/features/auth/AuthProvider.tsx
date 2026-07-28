@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { isApiError } from "../../api";
+import { isApiError, setSessionRefresher } from "../../api";
 import { Spinner } from "../../components";
 import {
   clearAuthTokens,
@@ -105,34 +105,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  // refreshToken でセッションを更新する共通処理（起動時検証 / 401 再試行で共用）。
+  // 成功で true。失効・不正（401/403）はセッション破棄、それ以外の失敗（サーバー
+  // 一時エラー・ネットワーク断）は一時障害としてセッションを維持し false を返す。
+  const refreshSession = useCallback(async (): Promise<boolean> => {
+    const refreshToken = getRefreshToken();
+    if (refreshToken === null) {
+      clearAuthTokens();
+      setUser(null);
+      return false;
+    }
+    try {
+      const session = await refresh(refreshToken);
+      return establishSession(session) !== null;
+    } catch (error) {
+      // 401/403 のみ「トークンが本当に失効した」と判断してセッションを破棄する。
+      // 500 等の一時エラーで有効なセッションを壊さないため対象を絞る。
+      if (isApiError(error) && (error.status === 401 || error.status === 403)) {
+        clearAuthTokens();
+        setUser(null);
+      }
+      return false;
+    }
+  }, [establishSession]);
+
+  // 401（アクセストークン失効）時に共通クライアントから呼ばれる refresher を登録する。
+  useEffect(() => {
+    setSessionRefresher(refreshSession);
+    return () => setSessionRefresher(null);
+  }, [refreshSession]);
+
   // 起動時に refreshToken でセッションを検証・更新する（StrictMode の二重実行を ref で防ぐ）。
   const didInit = useRef(false);
   useEffect(() => {
     if (didInit.current) return;
     didInit.current = true;
 
-    const refreshToken = getRefreshToken();
-    if (refreshToken === null) {
+    if (getRefreshToken() === null) {
       setIsInitializing(false);
       return;
     }
-
-    refresh(refreshToken)
-      .then((session) => {
-        establishSession(session);
-      })
-      .catch((error: unknown) => {
-        // 失効・不正（ApiError）はセッション破棄。ネットワーク断（NetworkError）は
-        // 一時的なので同期復元したセッションを維持する。
-        if (isApiError(error)) {
-          clearAuthTokens();
-          setUser(null);
-        }
-      })
-      .finally(() => {
-        setIsInitializing(false);
-      });
-  }, [establishSession]);
+    refreshSession().finally(() => {
+      setIsInitializing(false);
+    });
+  }, [refreshSession]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
