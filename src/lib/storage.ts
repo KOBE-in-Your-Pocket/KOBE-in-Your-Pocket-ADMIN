@@ -1,4 +1,4 @@
-import type { Role } from "../types/role";
+import { isRole, type Role } from "../types/role";
 
 /**
  * 認証セッションの永続化。
@@ -42,14 +42,16 @@ export function getStoredUser(): StoredUser | null {
   if (raw === null) return null;
   try {
     const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return null;
+    const { id, name, role } = parsed as Record<string, unknown>;
+    // role は有効な Role 値のときだけ受理する（型の契約を保つ）。
     if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      typeof (parsed as StoredUser).id === "string" &&
-      typeof (parsed as StoredUser).name === "string" &&
-      typeof (parsed as StoredUser).role === "string"
+      typeof id === "string" &&
+      typeof name === "string" &&
+      typeof role === "string" &&
+      isRole(role)
     ) {
-      return parsed as StoredUser;
+      return { id, name, role };
     }
     return null;
   } catch {
