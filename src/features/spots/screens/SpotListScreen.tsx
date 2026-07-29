@@ -1,9 +1,11 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Button,
   Card,
   type Column,
+  ConfirmDialog,
   EmptyBoxIcon,
   Pagination,
   PlusIcon,
@@ -15,7 +17,7 @@ import { ROUTES, spotEditPath } from "../../../routes/paths";
 import type { Spot } from "../../../types";
 import { GENRE_LABELS, GENRES, type Genre } from "../api/spots-api";
 import { SpotThumbnail } from "../components/SpotThumbnail";
-import { useSpots } from "../hooks/useSpots";
+import { spotsQueryKey, useSpots } from "../hooks/useSpots";
 import styles from "./SpotListScreen.module.css";
 
 /** ジャンル別のサムネイル配色（実 API はサムネ色を返さないため画面側で補う）。 */
@@ -35,11 +37,13 @@ function genreLabel(genre: string): string {
 
 export function SpotListScreen() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data, isLoading, isError } = useSpots();
 
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState<Genre | "all">("all");
   const [page, setPage] = useState(1);
+  const [target, setTarget] = useState<Spot | null>(null);
 
   const filtered = useMemo(
     () =>
@@ -62,6 +66,17 @@ export function SpotListScreen() {
     setSearch("");
     setGenre("all");
     setPage(1);
+  };
+
+  const onConfirmDelete = () => {
+    // Backend にスポット削除 API が無いため、当面はキャッシュからのローカル削除
+    // （非永続。再取得で戻る）。削除 API が実装されたら mutation へ差し替える。
+    if (target) {
+      queryClient.setQueryData<Spot[]>(spotsQueryKey, (old) =>
+        old?.filter((s) => s.id !== target.id),
+      );
+    }
+    setTarget(null);
   };
 
   const columns: Column<Spot>[] = [
@@ -97,6 +112,9 @@ export function SpotListScreen() {
             onClick={() => navigate(spotEditPath(s.id))}
           >
             編集
+          </Button>
+          <Button size="sm" variant="danger" onClick={() => setTarget(s)}>
+            削除
           </Button>
         </div>
       ),
@@ -173,6 +191,16 @@ export function SpotListScreen() {
           </div>
         )}
       </Card>
+
+      {target && (
+        <ConfirmDialog
+          title="スポットを削除しますか？"
+          message={`「${target.name}」を削除しますか？`}
+          note="この操作は元に戻せません。"
+          onConfirm={onConfirmDelete}
+          onClose={() => setTarget(null)}
+        />
+      )}
     </>
   );
 }
