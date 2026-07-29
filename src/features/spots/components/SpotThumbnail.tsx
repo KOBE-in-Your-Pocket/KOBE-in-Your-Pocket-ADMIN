@@ -17,9 +17,11 @@ type SpotThumbnailProps = {
  * フォールバックする（現状のシードは example.com のダミー URL なので概ねフォールバック）。
  */
 export function SpotThumbnail({ imageUrl, color, tint }: SpotThumbnailProps) {
-  const [failed, setFailed] = useState(false);
+  // 失敗した URL 自体を保持する。boolean だと再取得で imageUrl が有効値に変わっても
+  // フォールバックが残るため、URL が変われば（!== failedUrl）再度画像を試行する。
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
 
-  if (imageUrl === "" || failed) {
+  if (imageUrl === "" || failedUrl === imageUrl) {
     return (
       <div className={styles.thumb} style={{ background: tint }}>
         <PinIcon size={18} color={color} />
@@ -34,7 +36,7 @@ export function SpotThumbnail({ imageUrl, color, tint }: SpotThumbnailProps) {
       src={imageUrl}
       alt=""
       loading="lazy"
-      onError={() => setFailed(true)}
+      onError={() => setFailedUrl(imageUrl)}
     />
   );
 }
