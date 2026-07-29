@@ -1,0 +1,10 @@
+.thumb {
+  width: 44px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* img のときは画像を切り抜いて収める。div（フォールバック）では無視される。 */
+  object-fit: cover;
+}

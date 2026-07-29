@@ -6,7 +6,6 @@ import {
   type Column,
   EmptyBoxIcon,
   Pagination,
-  PinIcon,
   PlusIcon,
   SearchInput,
   Table,
@@ -15,6 +14,7 @@ import { DEFAULT_PAGE_SIZE } from "../../../lib/constants";
 import { ROUTES, spotEditPath } from "../../../routes/paths";
 import type { Spot } from "../../../types";
 import { GENRE_LABELS, GENRES, type Genre } from "../api/spots-api";
+import { SpotThumbnail } from "../components/SpotThumbnail";
 import { useSpots } from "../hooks/useSpots";
 import styles from "./SpotListScreen.module.css";
 
@@ -70,11 +70,10 @@ export function SpotListScreen() {
       header: "サムネイル",
       headerLabel: "サムネイル",
       cell: (s) => {
-        const { color, tint } = GENRE_COLORS[s.genre as Genre] ?? DEFAULT_GENRE_COLOR;
+        const { color, tint } =
+          GENRE_COLORS[s.genre as Genre] ?? DEFAULT_GENRE_COLOR;
         return (
-          <div className={styles.thumb} style={{ background: tint }}>
-            <PinIcon size={18} color={color} />
-          </div>
+          <SpotThumbnail imageUrl={s.media.imageUrl} color={color} tint={tint} />
         );
       },
     },
