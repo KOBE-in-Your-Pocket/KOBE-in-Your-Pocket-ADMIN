@@ -67,3 +67,10 @@
 .emptyAction {
   margin-top: 8px;
 }
+
+.errorBlock {
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-danger);
+}

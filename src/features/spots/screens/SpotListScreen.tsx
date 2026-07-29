@@ -4,7 +4,6 @@ import {
   Button,
   Card,
   type Column,
-  ConfirmDialog,
   EmptyBoxIcon,
   Pagination,
   PinIcon,
@@ -14,37 +13,45 @@ import {
 } from "../../../components";
 import { DEFAULT_PAGE_SIZE } from "../../../lib/constants";
 import { ROUTES, spotEditPath } from "../../../routes/paths";
-import {
-  GENRE_LABELS,
-  GENRES,
-  listSpots,
-  type Genre,
-  type MockSpot,
-} from "../api/spots-api";
+import type { Spot } from "../../../types";
+import { GENRE_LABELS, GENRES, type Genre } from "../api/spots-api";
+import { useSpots } from "../hooks/useSpots";
 import styles from "./SpotListScreen.module.css";
+
+/** ジャンル別のサムネイル配色（実 API はサムネ色を返さないため画面側で補う）。 */
+const GENRE_COLORS: Record<Genre, { color: string; tint: string }> = {
+  landmark: { color: "#E11D48", tint: "#FCE7EA" },
+  nature: { color: "#2E7D32", tint: "#E4F1E5" },
+  history: { color: "#B45309", tint: "#F6ECDE" },
+  gourmet: { color: "#DC2626", tint: "#FBE5E5" },
+  onsen: { color: "#0E7C86", tint: "#DEF0F1" },
+};
+const DEFAULT_GENRE_COLOR = { color: "#64748B", tint: "#F1F5F9" };
+
+/** ジャンルの表示ラベル。未対応の値は生の文字列で返す。 */
+function genreLabel(genre: string): string {
+  return GENRE_LABELS[genre as Genre] ?? genre;
+}
 
 export function SpotListScreen() {
   const navigate = useNavigate();
+  const { data, isLoading, isError } = useSpots();
 
-  // mock のため一覧はローカル state。削除のみ反映（保存は非永続）。実 API は #32。
-  const [spots, setSpots] = useState<MockSpot[]>(listSpots);
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState<Genre | "all">("all");
   const [page, setPage] = useState(1);
-  const [target, setTarget] = useState<MockSpot | null>(null);
 
   const filtered = useMemo(
     () =>
-      spots.filter(
+      (data ?? []).filter(
         (s) =>
           (genre === "all" || s.genre === genre) &&
           (search === "" || s.name.includes(search)),
       ),
-    [spots, genre, search],
+    [data, genre, search],
   );
 
   const totalPages = Math.ceil(filtered.length / DEFAULT_PAGE_SIZE);
-  // 削除で件数が減ると page が totalPages を超えて空表示になるため、有効範囲へ丸める。
   const currentPage = Math.min(page, Math.max(totalPages, 1));
   const pageItems = filtered.slice(
     (currentPage - 1) * DEFAULT_PAGE_SIZE,
@@ -57,26 +64,28 @@ export function SpotListScreen() {
     setPage(1);
   };
 
-  const onConfirmDelete = () => {
-    if (target) setSpots((prev) => prev.filter((s) => s.id !== target.id));
-    setTarget(null);
-  };
-
-  const columns: Column<MockSpot>[] = [
+  const columns: Column<Spot>[] = [
     {
       key: "thumb",
       header: "サムネイル",
       headerLabel: "サムネイル",
-      cell: (s) => (
-        <div className={styles.thumb} style={{ background: s.tint }}>
-          <PinIcon size={18} color={s.color} />
-        </div>
-      ),
+      cell: (s) => {
+        const { color, tint } = GENRE_COLORS[s.genre as Genre] ?? DEFAULT_GENRE_COLOR;
+        return (
+          <div className={styles.thumb} style={{ background: tint }}>
+            <PinIcon size={18} color={color} />
+          </div>
+        );
+      },
     },
     { key: "name", header: "名前", primary: true },
-    { key: "genre", header: "ジャンル", cell: (s) => GENRE_LABELS[s.genre] },
-    { key: "coord", header: "緯度・経度", cell: (s) => `${s.lat}, ${s.lng}` },
-    { key: "date", header: "登録日" },
+    { key: "genre", header: "ジャンル", cell: (s) => genreLabel(s.genre) },
+    {
+      key: "coord",
+      header: "緯度・経度",
+      cell: (s) =>
+        `${s.coordinates.latitude.toFixed(4)}, ${s.coordinates.longitude.toFixed(4)}`,
+    },
     {
       key: "actions",
       header: "操作",
@@ -89,9 +98,6 @@ export function SpotListScreen() {
             onClick={() => navigate(spotEditPath(s.id))}
           >
             編集
-          </Button>
-          <Button size="sm" variant="danger" onClick={() => setTarget(s)}>
-            削除
           </Button>
         </div>
       ),
@@ -140,7 +146,13 @@ export function SpotListScreen() {
           </span>
         </div>
 
-        {filtered.length > 0 ? (
+        {isError ? (
+          <div className={styles.errorBlock} role="alert">
+            スポットの取得に失敗しました。時間をおいて再度お試しください。
+          </div>
+        ) : isLoading ? (
+          <Table columns={columns} data={[]} rowKey={(s) => s.id} loading />
+        ) : filtered.length > 0 ? (
           <>
             <Table columns={columns} data={pageItems} rowKey={(s) => s.id} />
             <Pagination
@@ -162,16 +174,6 @@ export function SpotListScreen() {
           </div>
         )}
       </Card>
-
-      {target && (
-        <ConfirmDialog
-          title="スポットを削除しますか？"
-          message={`「${target.name}」を削除しますか？`}
-          note="この操作は元に戻せません。"
-          onConfirm={onConfirmDelete}
-          onClose={() => setTarget(null)}
-        />
-      )}
     </>
   );
 }
