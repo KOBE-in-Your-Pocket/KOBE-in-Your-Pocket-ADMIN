@@ -3,7 +3,7 @@ import type { LangKey } from "../../../types";
 /**
  * スポット管理の mock 固定データと定数。
  *
- * 画面は直接 import せず、`spots-api` の `listSpots()` / `getSpot()` 経由で参照する。
+ * 一覧は実 API（#32）へ移行済み。本 mock は編集フォームの getSpot が使う。
  * 実 API 接続は #32（一覧）/ #33（追加）、Backend のスポット編集は #152。
  */
 

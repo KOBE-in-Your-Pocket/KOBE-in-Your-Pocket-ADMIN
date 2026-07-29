@@ -28,15 +28,6 @@
   margin-left: auto;
 }
 
-.thumb {
-  width: 44px;
-  height: 34px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .rowActions {
   display: flex;
   gap: 8px;
@@ -66,4 +57,11 @@
 
 .emptyAction {
   margin-top: 8px;
+}
+
+.errorBlock {
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-danger);
 }
