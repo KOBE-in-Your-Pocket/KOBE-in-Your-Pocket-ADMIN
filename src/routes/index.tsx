@@ -10,6 +10,7 @@ import { AuthProvider, LoginScreen, landingPath, useAuth } from "../features/aut
 import { BlankScreen } from "../features/blank";
 import { DashboardScreen } from "../features/dashboard";
 import { ReviewListScreen } from "../features/reviews";
+import { ShelterListScreen } from "../features/shelters";
 import { SpotFormScreen, SpotListScreen } from "../features/spots";
 import { UserListScreen } from "../features/users";
 import { AppLayout, ForbiddenScreen, RootRedirect } from "../layouts";
@@ -63,7 +64,7 @@ const router = createBrowserRouter([
 
           // 準備中セクション（#24）
           { path: ROUTES.manner, element: <BlankScreen title="マナー" /> },
-          { path: ROUTES.shelter, element: <BlankScreen title="避難所" /> },
+          { path: ROUTES.shelter, element: <ShelterListScreen /> },
           { path: ROUTES.genre, element: <BlankScreen title="ジャンル" /> },
           { path: ROUTES.stats, element: <BlankScreen title="統計" /> },
 
