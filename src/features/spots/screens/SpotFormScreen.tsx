@@ -351,6 +351,14 @@ function langLabel(lang: LangKey): string {
 /** 追加失敗の例外をユーザー向け文言に変換する（Backend の生メッセージは出さない）。 */
 function saveErrorMessage(error: unknown): string {
   if (isApiError(error)) {
+    // 未認証（セッション切れ等）。再ログインを促す。
+    if (error.isUnauthorized) {
+      return "ログインが必要です。再度ログインしてください。";
+    }
+    // 権限不足（operator 等が許可されない操作）。
+    if (error.isForbidden) {
+      return "この操作を行う権限がありません。";
+    }
     if (error.violations.length > 0) {
       return "入力内容に誤りがあります。各項目を確認してください。";
     }
