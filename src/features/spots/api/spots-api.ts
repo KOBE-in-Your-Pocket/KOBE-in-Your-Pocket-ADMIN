@@ -5,7 +5,7 @@
  * 追加（#33）/ 編集は未接続で、フォームは getSpot の mock を使う。
  */
 import { apiRequest } from "../../../api";
-import type { Spot } from "../../../types";
+import type { RegisterSpotRequest, Spot } from "../../../types";
 import { MOCK_SPOTS } from "./mock-spots";
 import type { MockSpot } from "./mock-spots";
 
@@ -23,6 +23,19 @@ const LIST_LANG = "ja";
  */
 export function fetchSpots(): Promise<Spot[]> {
   return apiRequest<Spot[]>(`/api/v1/tourism/spots?lang=${LIST_LANG}`);
+}
+
+/**
+ * スポットを追加する（POST /api/v1/tourism/spots）。
+ *
+ * localizations は ja/en/zh/ko ちょうど4件・各項目が非空であることが Backend 必須。
+ * 成功時は作成された Spot（201）を返す。
+ */
+export function createSpot(request: RegisterSpotRequest): Promise<Spot> {
+  return apiRequest<Spot>("/api/v1/tourism/spots", {
+    method: "POST",
+    json: request,
+  });
 }
 
 /** ID でスポットを1件取得する（mock。編集フォーム用、実 API 接続は別 Issue）。 */
