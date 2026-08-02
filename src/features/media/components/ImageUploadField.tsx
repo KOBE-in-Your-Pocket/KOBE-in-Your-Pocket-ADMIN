@@ -1,6 +1,7 @@
 import { type ChangeEvent, useId, useRef, useState } from "react";
 import { isApiError, isNetworkError } from "../../../api";
 import { Spinner } from "../../../components";
+import { MAX_IMAGE_UPLOAD_BYTES } from "../api/media-api";
 import { useUploadImage } from "../hooks/useUploadImage";
 import styles from "./ImageUploadField.module.css";
 
@@ -47,6 +48,13 @@ export function ImageUploadField({
     setError(null);
     if (!file.type.startsWith("image/")) {
       setError("画像ファイルを選択してください。");
+      return;
+    }
+    // 上限超過は Backend でも 413 になる。送信前に弾いて無駄な往復をなくす。
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+      setError(
+        `画像サイズが大きすぎます（上限 ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)}）。より小さい画像を選択してください。`,
+      );
       return;
     }
 
@@ -114,6 +122,12 @@ export function ImageUploadField({
   );
 }
 
+/** バイト数を MB 表記にする（端数がある場合のみ小数第 1 位まで）。 */
+function formatMegabytes(bytes: number): string {
+  const mb = bytes / (1024 * 1024);
+  return `${Number.isInteger(mb) ? mb : mb.toFixed(1)}MB`;
+}
+
 /** アップロード失敗の例外をユーザー向け文言に変換する（生メッセージは出さない）。 */
 function uploadErrorMessage(error: unknown): string {
   if (isApiError(error)) {
@@ -124,7 +138,8 @@ function uploadErrorMessage(error: unknown): string {
       return "画像をアップロードする権限がありません。";
     }
     if (error.status === 413) {
-      return "画像サイズが大きすぎます。より小さい画像を選択してください。";
+      // 事前チェックを通ったのに 413 なら、Backend 側の上限が下がっている可能性がある。
+      return `画像サイズが大きすぎます（上限 ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)}）。より小さい画像を選択してください。`;
     }
     if (error.status === 400 || error.violations.length > 0) {
       return "この画像はアップロードできません。別の画像を選択してください。";

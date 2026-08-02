@@ -12,6 +12,17 @@ type MediaUploadResponse = {
 };
 
 /**
+ * アップロード可能な画像 1 ファイルの上限バイト数。
+ *
+ * Backend の `spring.servlet.multipart.max-file-size`（既定 5MB / 環境変数
+ * `MEDIA_MAX_FILE_SIZE` で変更可）と同じ値。Spring の `DataSize` は MB を
+ * 1024*1024 として解釈するため、ここでも 2 進接頭辞で揃える。
+ *
+ * Backend 側の上限が変わったらこの値も追随させる（超過分は 413 で弾かれる）。
+ */
+export const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
+
+/**
  * 画像ファイルをアップロードし、保存先の公開 URL を返す
  * （POST /api/v1/media/uploads, multipart/form-data）。
  *
