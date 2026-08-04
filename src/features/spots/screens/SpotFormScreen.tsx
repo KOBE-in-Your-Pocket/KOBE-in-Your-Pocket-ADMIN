@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { isApiError, isNetworkError } from "../../../api";
 import { Button } from "../../../components";
+import { ImageUploadField } from "../../media";
 import { ROUTES } from "../../../routes/paths";
 import {
   LANG_KEYS,
@@ -58,7 +59,6 @@ export function SpotFormScreen() {
   const genreId = useId();
   const latId = useId();
   const lngId = useId();
-  const imageUrlId = useId();
   const nameId = useId();
   const categoryLabelId = useId();
   const descriptionId = useId();
@@ -67,6 +67,7 @@ export function SpotFormScreen() {
 
   const [langTab, setLangTab] = useState<LangKey>("ja");
   const [error, setError] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
   const [form, setForm] = useState<SpotForm>(() => ({
     // 編集時は一覧が持つ値のみ復元できる（他項目は編集 API 未接続のため空）。
     name: editing ? { ...EMPTY_LOCALIZED, ja: editing.name } : EMPTY_LOCALIZED,
@@ -121,7 +122,11 @@ export function SpotFormScreen() {
           >
             キャンセル
           </Button>
-          <Button onClick={onSave} loading={createSpot.isPending}>
+          <Button
+            onClick={onSave}
+            loading={createSpot.isPending}
+            disabled={imageUploading}
+          >
             保存
           </Button>
         </div>
@@ -206,21 +211,15 @@ export function SpotFormScreen() {
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label} htmlFor={imageUrlId}>
-                画像URL
-              </label>
-              <input
-                id={imageUrlId}
-                className={styles.input}
-                type="url"
+              <ImageUploadField
+                label="画像"
                 value={form.imageUrl}
-                placeholder="https://…"
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, imageUrl: e.target.value }))
+                onChange={(imageUrl) =>
+                  setForm((prev) => ({ ...prev, imageUrl }))
                 }
+                onUploadingChange={setImageUploading}
+                disabled={createSpot.isPending}
               />
-              {/* 画像ファイル選択→S3 アップロードは Backend の presigned URL API が
-                  必要なため別 Issue。当面は画像 URL を直接入力する。 */}
             </div>
           </div>
 
@@ -300,7 +299,7 @@ export function SpotFormScreen() {
 /** 送信前のクライアント検証。問題があればユーザー向け文言、無ければ null。 */
 function validate(form: SpotForm): string | null {
   if (form.imageUrl.trim() === "") {
-    return "画像URLを入力してください。";
+    return "画像をアップロードしてください。";
   }
   if (
     form.lat.trim() === "" ||
