@@ -57,6 +57,12 @@ type SpotForm = {
  *
  * 編集時は保存に全言語が必要なため、フォームを描画する前に1件を全言語ぶん取得する
  * （取得できるまで入力させない）。取得後の初期値注入は [SpotFormBody] のマウントで行う。
+ *
+ * [SpotFormBody] には `key` に対象スポットの id を渡して、別スポットへ遷移したら
+ * 必ず再マウントさせる。`initial` は useState の初期値としてしか読まれないため、
+ * 遷移先の詳細がキャッシュ済み（＝ローディングを挟まず再描画される）だと、
+ * state だけ前のスポットのまま `spotId` が入れ替わる。更新は全置換なので、
+ * その状態で保存すると遷移先スポットの全言語データを前のスポットの内容で潰す。
  */
 export function SpotFormScreen() {
   const navigate = useNavigate();
@@ -104,6 +110,7 @@ export function SpotFormScreen() {
 
   return (
     <SpotFormBody
+      key={id}
       mode="edit"
       spotId={id}
       initial={toForm(detail.data)}
@@ -456,6 +463,10 @@ function loadErrorMessage(error: unknown): string {
     }
     if (error.isUnauthorized) {
       return "ログインが必要です。再度ログインしてください。";
+    }
+    // 403 は再試行しても解決しないため、汎用の「時間をおいて」文言に落とさない。
+    if (error.isForbidden) {
+      return "このスポットを表示する権限がありません。";
     }
   }
   if (isNetworkError(error)) {
