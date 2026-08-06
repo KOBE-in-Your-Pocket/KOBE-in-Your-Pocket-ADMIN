@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RegisterSpotRequest } from "../../../types";
 import {
   createSpot,
+  deleteSpot,
   fetchSpotDetail,
   fetchSpots,
   updateSpot,
@@ -55,6 +56,22 @@ export function useUpdateSpot(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (request: RegisterSpotRequest) => updateSpot(id, request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: spotsQueryKey });
+    },
+  });
+}
+
+/**
+ * スポットを削除する（DELETE）。Backend は admin 専用。
+ *
+ * 成功時は `["spots"]` を無効化して一覧を再取得する。削除済みの詳細キャッシュも
+ * 前方一致で巻き込まれるため、個別の削除は不要。
+ */
+export function useDeleteSpot() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteSpot,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: spotsQueryKey });
     },

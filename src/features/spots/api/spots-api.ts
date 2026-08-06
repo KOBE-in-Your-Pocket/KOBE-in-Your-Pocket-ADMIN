@@ -61,6 +61,18 @@ export function updateSpot(
   });
 }
 
+/**
+ * スポットを削除する（DELETE /api/v1/tourism/spots/{id}）。
+ *
+ * Backend は **admin ロール専用**。成功時は 204（ボディ無し）。
+ * `spot_localization` / `review` は DB の ON DELETE CASCADE で連動削除される。
+ */
+export function deleteSpot(id: string): Promise<void> {
+  return apiRequest<void>(`${SPOTS_PATH}/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
 /** スポットを1件取得する（GET /api/v1/tourism/spots/{id}）。指定言語で解決された単一言語。 */
 export function fetchSpot(id: string, lang: LangKey): Promise<Spot> {
   return apiRequest<Spot>(
