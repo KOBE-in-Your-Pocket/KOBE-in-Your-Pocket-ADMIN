@@ -13,6 +13,7 @@ import { ReviewListScreen } from "../features/reviews";
 import { SpotFormScreen, SpotListScreen } from "../features/spots";
 import { UserListScreen } from "../features/users";
 import { AppLayout, ForbiddenScreen, RootRedirect } from "../layouts";
+import { SHOW_MOCK_SCREENS } from "../lib/feature-flags";
 import { createQueryClient } from "../lib/query-client";
 import { AdminGuard, AuthGuard } from "./guards";
 import { DEV_ROUTES, ROUTE_PATTERNS, ROUTES } from "./paths";
@@ -50,16 +51,38 @@ const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          { index: true, element: <DashboardScreen /> },
+          // ダッシュボードは統計 API が未整備で mock 固定値のため、既定は準備中。
+          {
+            index: true,
+            element: SHOW_MOCK_SCREENS ? (
+              <DashboardScreen />
+            ) : (
+              <BlankScreen title="ダッシュボード" />
+            ),
+          },
 
-          // スポット
+          // スポット（実 API 接続済み。一覧 / 追加 / 編集 / 削除）
           { path: ROUTES.spots, element: <SpotListScreen /> },
           { path: ROUTES.spotNew, element: <SpotFormScreen /> },
           { path: ROUTE_PATTERNS.spotEdit, element: <SpotFormScreen /> },
 
-          // レビュー・ユーザー
-          { path: ROUTES.reviews, element: <ReviewListScreen /> },
-          { path: ROUTES.users, element: <UserListScreen /> },
+          // レビュー・ユーザーは未接続（mock）。既定は準備中。
+          {
+            path: ROUTES.reviews,
+            element: SHOW_MOCK_SCREENS ? (
+              <ReviewListScreen />
+            ) : (
+              <BlankScreen title="レビュー" />
+            ),
+          },
+          {
+            path: ROUTES.users,
+            element: SHOW_MOCK_SCREENS ? (
+              <UserListScreen />
+            ) : (
+              <BlankScreen title="ユーザー" />
+            ),
+          },
 
           // 準備中セクション（#24）
           { path: ROUTES.manner, element: <BlankScreen title="マナー" /> },
