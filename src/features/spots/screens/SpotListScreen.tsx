@@ -15,6 +15,7 @@ import {
 import { DEFAULT_PAGE_SIZE } from "../../../lib/constants";
 import { ROUTES, spotEditPath } from "../../../routes/paths";
 import type { Spot } from "../../../types";
+import { useAuth } from "../../auth";
 import { GENRE_LABELS, GENRES, type Genre } from "../api/spots-api";
 import { SpotThumbnail } from "../components/SpotThumbnail";
 import { spotsQueryKey, useSpots } from "../hooks/useSpots";
@@ -39,6 +40,10 @@ export function SpotListScreen() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useSpots();
+  const { user } = useAuth();
+  // Backend の削除 API は admin 専用（`@PreAuthorize("hasRole('ADMIN')")`）。
+  // operator に出すと押しても 403 になるため、ユーザー一覧と同じく列ごと出し分ける。
+  const isAdmin = user?.role === "admin";
 
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState<Genre | "all">("all");
@@ -69,8 +74,9 @@ export function SpotListScreen() {
   };
 
   const onConfirmDelete = () => {
-    // Backend にスポット削除 API が無いため、当面はキャッシュからのローカル削除
-    // （非永続。再取得で戻る）。削除 API が実装されたら mutation へ差し替える。
+    // 削除 API（Backend PR #150）が develop 未マージのため、当面はキャッシュからの
+    // ローカル削除（非永続。再取得で戻る）。**この経路は admin にしか到達しない。**
+    // API がマージされ次第 useDeleteSpot（DELETE /api/v1/tourism/spots/{id}）へ差し替える。
     if (target) {
       queryClient.setQueryData<Spot[]>(spotsQueryKey, (old) =>
         old?.filter((s) => s.id !== target.id),
@@ -113,9 +119,11 @@ export function SpotListScreen() {
           >
             編集
           </Button>
-          <Button size="sm" variant="danger" onClick={() => setTarget(s)}>
-            削除
-          </Button>
+          {isAdmin && (
+            <Button size="sm" variant="danger" onClick={() => setTarget(s)}>
+              削除
+            </Button>
+          )}
         </div>
       ),
     },
