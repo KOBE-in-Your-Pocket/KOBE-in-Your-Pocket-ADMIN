@@ -1,0 +1,64 @@
+/* 一覧画面で共通のテーブル（ADMIN-image Table.module.css 準拠） */
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.headRow {
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-subtle);
+  text-align: left;
+}
+
+.th {
+  padding: 11px 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.row {
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.td {
+  padding: 10px;
+  color: var(--color-text-muted);
+  vertical-align: middle;
+}
+
+/* 名前など、行の主となるセル */
+.tdPrimary {
+  color: var(--color-text-heading);
+  font-weight: 500;
+}
+
+/* 列ごとの右寄せ（操作列など） */
+.alignEnd {
+  text-align: right;
+}
+
+.alignCenter {
+  text-align: center;
+}
+
+/* 空状態・ローディングのメッセージセル */
+.stateCell {
+  padding: 40px 10px;
+  text-align: center;
+  color: var(--color-text-faint);
+}
+
+.stateInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

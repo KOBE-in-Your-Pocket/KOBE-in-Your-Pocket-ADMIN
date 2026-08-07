@@ -1,0 +1,30 @@
+/* ADMIN-image pages/blank/BlankPage.module.css 準拠 */
+.pageTitle {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 18px;
+  color: var(--color-text-heading);
+}
+
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+}
+
+.placeholder {
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--color-text-placeholder);
+}
+
+.text {
+  font-size: 14px;
+}

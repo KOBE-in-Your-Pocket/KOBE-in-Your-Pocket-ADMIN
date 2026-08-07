@@ -1,0 +1,30 @@
+/* ADMIN-image Controls.module.css の search / searchIcon / searchInput 準拠 */
+.search {
+  position: relative;
+  min-width: 200px;
+}
+
+.icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--color-text-faint);
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px 8px 32px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.input::placeholder {
+  color: var(--color-text-placeholder);
+}

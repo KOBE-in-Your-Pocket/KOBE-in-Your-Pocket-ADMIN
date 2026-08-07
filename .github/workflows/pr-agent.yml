@@ -1,0 +1,41 @@
+name: PR Agent
+
+# CodeRabbit と併用する二次レビュー。
+# 自動実行は /review（見取り図）と /improve（行単位のコード提案）。
+# /describe は PR コメントで手動実行する。
+# synchronize は PR-Agent 既定の pr_actions に含まれず空振りするため入れない。
+# push のたびに再レビューしたい場合は PR コメントで /review を送る。
+#
+# モデルは Google AI Studio の Gemini（無料枠あり）を使う。
+# 実行にはリポジトリ secret GEMINI_API_KEY の登録が必要。
+# 取得: https://aistudio.google.com/apikey
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  issue_comment:
+
+jobs:
+  pr_agent:
+    # Bot の PR / コメントには反応させない（無限ループ防止）
+    if: ${{ github.event.sender.type != 'Bot' }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+    steps:
+      - name: PR Agent action step
+        uses: the-pr-agent/pr-agent@v0.39.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # gemini-2.5-flash は新規キーで廃止済み（404）。現行の flash 系を使う。
+          config.model: "gemini/gemini-flash-latest"
+          config.fallback_models: '["gemini/gemini-2.0-flash"]'
+          # gemini-flash-latest は PR-Agent の既定モデル表に無いため上限を明示する
+          config.custom_model_max_tokens: "1000000"
+          github_action_config.auto_review: "true"
+          github_action_config.auto_describe: "false"
+          # 行単位のコード改善提案（Code Suggestions）も自動投稿する
+          github_action_config.auto_improve: "true"
+          github_action_config.pr_actions: '["opened", "reopened", "ready_for_review"]'

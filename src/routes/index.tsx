@@ -1,30 +1,100 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { AuthProvider, LoginScreen } from "../features/auth";
-import { DashboardScreen } from "../features/dashboard";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
 import {
-  AppLayout,
-  ForbiddenScreen,
-  RootRedirect,
-} from "../layouts";
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+  type RouteObject,
+} from "react-router-dom";
+import { AuthProvider, LoginScreen, landingPath, useAuth } from "../features/auth";
+import { BlankScreen } from "../features/blank";
+import { DashboardScreen } from "../features/dashboard";
+import { ReviewListScreen } from "../features/reviews";
+import { SpotFormScreen, SpotListScreen } from "../features/spots";
+import { UserListScreen } from "../features/users";
+import { AppLayout, ForbiddenScreen, RootRedirect } from "../layouts";
+import { SHOW_MOCK_SCREENS } from "../lib/feature-flags";
+import { createQueryClient } from "../lib/query-client";
 import { AdminGuard, AuthGuard } from "./guards";
-import { ROUTES } from "./paths";
+import { DEV_ROUTES, ROUTE_PATTERNS, ROUTES } from "./paths";
+
+/** ログイン済みなら /login を出さずロールの初期画面へ送る。 */
+function LoginRoute() {
+  const { user } = useAuth();
+  if (user !== null) return <Navigate to={landingPath(user.role)} replace />;
+  return <LoginScreen />;
+}
+
+/**
+ * 開発ビルド限定のルート。
+ *
+ * import.meta.env.DEV は本番ビルドで false に静的置換されるため、
+ * この分岐ごと除去され、動的 import 先のコードも本番バンドルに含まれない。
+ */
+const devRoutes: RouteObject[] = import.meta.env.DEV
+  ? [
+      {
+        path: DEV_ROUTES.uiGallery,
+        lazy: async () => ({
+          Component: (await import("../features/dev")).UiGalleryScreen,
+        }),
+      },
+    ]
+  : [];
 
 const router = createBrowserRouter([
-  {
-    path: ROUTES.login,
-    element: <LoginScreen />,
-  },
+  ...devRoutes,
+  { path: ROUTES.login, element: <LoginRoute /> },
   {
     element: <AuthGuard />,
     children: [
       {
         element: <AppLayout />,
         children: [
-          { index: true, element: <DashboardScreen /> },
+          // ダッシュボードは統計 API が未整備で mock 固定値のため、既定は準備中。
+          {
+            index: true,
+            element: SHOW_MOCK_SCREENS ? (
+              <DashboardScreen />
+            ) : (
+              <BlankScreen title="ダッシュボード" />
+            ),
+          },
+
+          // スポット（実 API 接続済み。一覧 / 追加 / 編集 / 削除）
+          { path: ROUTES.spots, element: <SpotListScreen /> },
+          { path: ROUTES.spotNew, element: <SpotFormScreen /> },
+          { path: ROUTE_PATTERNS.spotEdit, element: <SpotFormScreen /> },
+
+          // レビュー・ユーザーは未接続（mock）。既定は準備中。
+          {
+            path: ROUTES.reviews,
+            element: SHOW_MOCK_SCREENS ? (
+              <ReviewListScreen />
+            ) : (
+              <BlankScreen title="レビュー" />
+            ),
+          },
+          {
+            path: ROUTES.users,
+            element: SHOW_MOCK_SCREENS ? (
+              <UserListScreen />
+            ) : (
+              <BlankScreen title="ユーザー" />
+            ),
+          },
+
+          // 準備中セクション（#24）
+          { path: ROUTES.manner, element: <BlankScreen title="マナー" /> },
+          { path: ROUTES.shelter, element: <BlankScreen title="避難所" /> },
+          { path: ROUTES.genre, element: <BlankScreen title="ジャンル" /> },
+          { path: ROUTES.stats, element: <BlankScreen title="統計" /> },
+
+          // admin 専用（#25）
           {
             element: <AdminGuard />,
             children: [
-              { path: "logs", element: <ForbiddenScreen /> },
+              { path: ROUTES.logs, element: <BlankScreen title="操作ログ" /> },
             ],
           },
         ],
@@ -36,9 +106,14 @@ const router = createBrowserRouter([
 ]);
 
 export function AppRouter() {
+  // StrictMode の再マウントや再レンダリングでキャッシュを捨てないよう state で保持する。
+  const [queryClient] = useState(createQueryClient);
+
   return (
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

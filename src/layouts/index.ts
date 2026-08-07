@@ -1,5 +1,2 @@
-export {
-  AppLayout,
-  ForbiddenScreen,
-  RootRedirect,
-} from "./components/AppLayout";
+export { AppLayout, RootRedirect } from "./components/AppLayout";
+export { ForbiddenScreen } from "./components/ForbiddenScreen";

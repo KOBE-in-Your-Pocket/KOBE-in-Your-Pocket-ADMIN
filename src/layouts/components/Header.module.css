@@ -1,0 +1,79 @@
+/* ADMIN-image widgets/app-shell/Header.module.css 準拠 */
+.header {
+  display: flex;
+  align-items: center;
+  height: var(--header-height);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.brand {
+  width: var(--sidebar-width);
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  height: 100%;
+  border-right: 1px solid var(--color-border-divider);
+  flex: none;
+}
+
+.wordmark {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.wordmarkMain {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.wordmarkSub {
+  font-size: 9px;
+  color: var(--color-text-subtle);
+  margin-top: 3px;
+}
+
+.bar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  min-width: 0;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-body);
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.bell {
+  color: var(--color-text-subtle);
+  display: flex;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.userName {
+  font-size: 13px;
+  color: var(--color-text-body);
+  white-space: nowrap;
+}
