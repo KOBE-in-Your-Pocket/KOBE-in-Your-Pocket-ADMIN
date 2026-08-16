@@ -32,13 +32,14 @@ export function UserListScreen() {
   const [target, setTarget] = useState<UserListItem | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const filtered = useMemo(
-    () =>
-      (data?.data ?? []).filter(
-        (u) => search === "" || u.name.includes(search),
-      ),
-    [data, search],
-  );
+  // 表示名には英字も混ざるため、大文字小文字を区別せずに絞り込む
+  // （`TestUser` を `testuser` で引けないと運営画面の検索として使いにくい）。
+  const filtered = useMemo(() => {
+    const users = data?.data ?? [];
+    const keyword = search.trim().toLowerCase();
+    if (keyword === "") return users;
+    return users.filter((u) => u.name.toLowerCase().includes(keyword));
+  }, [data, search]);
 
   const totalPages = Math.ceil(filtered.length / DEFAULT_PAGE_SIZE);
   // 削除で件数が減ると page が totalPages を超えて空表示になるため、有効範囲へ丸める。
