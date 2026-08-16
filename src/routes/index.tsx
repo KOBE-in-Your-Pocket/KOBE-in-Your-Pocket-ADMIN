@@ -75,14 +75,8 @@ const router = createBrowserRouter([
               <BlankScreen title="レビュー" />
             ),
           },
-          {
-            path: ROUTES.users,
-            element: SHOW_MOCK_SCREENS ? (
-              <UserListScreen />
-            ) : (
-              <BlankScreen title="ユーザー" />
-            ),
-          },
+          // ユーザーは実 API に接続済み（#34 / #35）のため mock フラグで隠さない。
+          { path: ROUTES.users, element: <UserListScreen /> },
 
           // 準備中セクション（#24）
           { path: ROUTES.manner, element: <BlankScreen title="マナー" /> },
