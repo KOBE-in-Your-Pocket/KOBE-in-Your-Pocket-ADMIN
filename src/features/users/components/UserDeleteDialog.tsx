@@ -1,23 +1,26 @@
 import { useId, useState } from "react";
 import { Button, ConfirmDialog, Modal } from "../../../components";
-import type { MockUser } from "../api/users-api";
+import type { UserListItem } from "../../../types";
 import styles from "./UserDeleteDialog.module.css";
 
 export type UserDeleteDialogProps = {
-  user: MockUser;
-  onDeleted: (id: string) => void;
+  user: UserListItem;
+  /** 削除リクエスト中。二重送信を防ぐためボタンを無効化する。 */
+  loading?: boolean;
+  onConfirm: (id: string) => void;
   onClose: () => void;
 };
 
 /**
- * ユーザー削除の2段階確認。
+ * ユーザー削除の2段階確認（#35）。
  *
  * 1段階目で意思確認し、2段階目でユーザーIDの入力一致を求める（誤削除防止）。
- * 実際の削除 API 接続は #35 で onDeleted を差し替える。
+ * Backend の削除は Supabase Auth と DB プロフィールの両方を消し、取り消せない。
  */
 export function UserDeleteDialog({
   user,
-  onDeleted,
+  loading = false,
+  onConfirm,
   onClose,
 }: UserDeleteDialogProps) {
   const [step, setStep] = useState<1 | 2>(1);
@@ -60,18 +63,18 @@ export function UserDeleteDialog({
         className={styles.input}
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="user_XXXX"
+        placeholder={user.id}
         autoComplete="off"
       />
 
       <div className={styles.buttons}>
-        <Button variant="secondary" onClick={onClose}>
+        <Button variant="secondary" onClick={onClose} disabled={loading}>
           キャンセル
         </Button>
         <Button
           variant="danger"
-          disabled={!canDelete}
-          onClick={() => onDeleted(user.id)}
+          disabled={!canDelete || loading}
+          onClick={() => onConfirm(user.id)}
         >
           削除を確定
         </Button>
