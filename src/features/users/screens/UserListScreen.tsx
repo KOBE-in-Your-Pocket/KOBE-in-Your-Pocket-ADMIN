@@ -4,7 +4,6 @@ import {
   Button,
   Card,
   type Column,
-  EmptyBoxIcon,
   Pagination,
   SearchInput,
   Table,
@@ -34,12 +33,17 @@ export function UserListScreen() {
 
   // 表示名には英字も混ざるため、大文字小文字を区別せずに絞り込む
   // （`TestUser` を `testuser` で引けないと運営画面の検索として使いにくい）。
+  //
+  // 絞り込みと空表示のメッセージで同じ値を見る。片方が `search`、もう片方が
+  // `search.trim()` だと、空白だけ入力したときに「全件返しているのに
+  // 『該当なし』と出る」というズレが起きる。
+  const keyword = useMemo(() => search.trim().toLowerCase(), [search]);
+
   const filtered = useMemo(() => {
     const users = data?.data ?? [];
-    const keyword = search.trim().toLowerCase();
     if (keyword === "") return users;
     return users.filter((u) => u.name.toLowerCase().includes(keyword));
-  }, [data, search]);
+  }, [data, keyword]);
 
   const totalPages = Math.ceil(filtered.length / DEFAULT_PAGE_SIZE);
   // 削除で件数が減ると page が totalPages を超えて空表示になるため、有効範囲へ丸める。
@@ -86,7 +90,6 @@ export function UserListScreen() {
           {
             key: "actions",
             header: "操作",
-            align: "end",
             cell: (u: UserListItem) => (
               <div className={styles.rowActions}>
                 <Button size="sm" variant="danger" onClick={() => setTarget(u)}>
@@ -126,26 +129,26 @@ export function UserListScreen() {
           <div className={styles.errorBlock} role="alert">
             ユーザーの取得に失敗しました。時間をおいて再度お試しください。
           </div>
-        ) : isLoading ? (
-          <Table columns={columns} data={[]} rowKey={(u) => u.id} loading />
-        ) : filtered.length > 0 ? (
+        ) : (
           <>
-            <Table columns={columns} data={pageItems} rowKey={(u) => u.id} />
+            {/* 空表示は Table 内の 1 行に収める（検索条件が見えたまま残る）。 */}
+            <Table
+              columns={columns}
+              data={pageItems}
+              rowKey={(u) => u.id}
+              loading={isLoading}
+              empty={
+                keyword === ""
+                  ? "ユーザーがいません。"
+                  : "該当するユーザーがいません。"
+              }
+            />
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={setPage}
             />
           </>
-        ) : (
-          <div className={styles.empty}>
-            <EmptyBoxIcon size={46} />
-            <div className={styles.emptyTitle}>
-              {search === ""
-                ? "ユーザーがいません"
-                : "該当するユーザーがいません"}
-            </div>
-          </div>
         )}
       </Card>
 

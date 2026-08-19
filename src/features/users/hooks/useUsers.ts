@@ -15,14 +15,18 @@ export function useUsers() {
 /**
  * ユーザーを削除する（DELETE）。Backend は admin 専用。
  *
- * 成功時は一覧キャッシュを無効化して再取得する。画面側で行を消さないのは、
- * 削除が Supabase Auth と DB の 2 段階で、サーバーの結果を正とするため。
+ * 画面側で行を消さないのは、削除が Supabase Auth と DB の 2 段階で、
+ * サーバーの結果を正とするため。
+ *
+ * 無効化は `onSuccess` ではなく **`onSettled`**（成功・失敗とも）で行う。
+ * 他の運営者が先に削除していると Backend は 404 を返し、`onSuccess` だけだと
+ * 「既に削除されています」と表示しながら**その行が一覧に残り続ける**。
  */
 export function useDeleteUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteUser,
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: usersQueryKey });
     },
   });
