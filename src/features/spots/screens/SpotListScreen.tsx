@@ -112,7 +112,6 @@ export function SpotListScreen() {
     {
       key: "actions",
       header: "操作",
-      align: "end",
       cell: (s) => (
         <div className={styles.rowActions}>
           <Button

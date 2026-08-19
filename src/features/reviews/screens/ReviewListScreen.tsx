@@ -5,7 +5,6 @@ import {
   Card,
   type Column,
   ConfirmDialog,
-  EmptyBoxIcon,
   Pagination,
   SearchInput,
   StarRating,
@@ -95,7 +94,6 @@ export function ReviewListScreen() {
     {
       key: "actions",
       header: "操作",
-      align: "end",
       cell: (r) => (
         <div className={styles.rowActions}>
           <Button size="sm" variant="danger" onClick={() => setTarget(r)}>
@@ -168,26 +166,29 @@ export function ReviewListScreen() {
           <div className={styles.errorBlock} role="alert">
             レビューの取得に失敗しました。時間をおいて再度お試しください。
           </div>
-        ) : isLoading ? (
-          <Table columns={columns} data={[]} rowKey={(r) => r.id} loading />
-        ) : filtered.length > 0 ? (
+        ) : (
           <>
-            <Table columns={columns} data={pageItems} rowKey={(r) => r.id} />
+            {/*
+              空表示は Table 内の 1 行に収める。絞り込みが多い画面なので、
+              テーブルごと差し替えると「どの条件で 0 件になったか」が見えなくなる。
+            */}
+            <Table
+              columns={columns}
+              data={pageItems}
+              rowKey={(r) => r.id}
+              loading={isLoading}
+              empty={
+                reviews?.length === 0
+                  ? "レビューはまだありません。"
+                  : "該当するレビューがありません。"
+              }
+            />
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={setPage}
             />
           </>
-        ) : (
-          <div className={styles.empty}>
-            <EmptyBoxIcon size={46} />
-            <div className={styles.emptyTitle}>
-              {reviews?.length === 0
-                ? "レビューがありません"
-                : "該当するレビューがありません"}
-            </div>
-          </div>
         )}
       </Card>
 

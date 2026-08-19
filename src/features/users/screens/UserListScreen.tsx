@@ -4,7 +4,6 @@ import {
   Button,
   Card,
   type Column,
-  EmptyBoxIcon,
   Pagination,
   SearchInput,
   Table,
@@ -86,7 +85,6 @@ export function UserListScreen() {
           {
             key: "actions",
             header: "操作",
-            align: "end",
             cell: (u: UserListItem) => (
               <div className={styles.rowActions}>
                 <Button size="sm" variant="danger" onClick={() => setTarget(u)}>
@@ -126,26 +124,26 @@ export function UserListScreen() {
           <div className={styles.errorBlock} role="alert">
             ユーザーの取得に失敗しました。時間をおいて再度お試しください。
           </div>
-        ) : isLoading ? (
-          <Table columns={columns} data={[]} rowKey={(u) => u.id} loading />
-        ) : filtered.length > 0 ? (
+        ) : (
           <>
-            <Table columns={columns} data={pageItems} rowKey={(u) => u.id} />
+            {/* 空表示は Table 内の 1 行に収める（検索条件が見えたまま残る）。 */}
+            <Table
+              columns={columns}
+              data={pageItems}
+              rowKey={(u) => u.id}
+              loading={isLoading}
+              empty={
+                search === ""
+                  ? "ユーザーがいません。"
+                  : "該当するユーザーがいません。"
+              }
+            />
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={setPage}
             />
           </>
-        ) : (
-          <div className={styles.empty}>
-            <EmptyBoxIcon size={46} />
-            <div className={styles.emptyTitle}>
-              {search === ""
-                ? "ユーザーがいません"
-                : "該当するユーザーがいません"}
-            </div>
-          </div>
         )}
       </Card>
 
