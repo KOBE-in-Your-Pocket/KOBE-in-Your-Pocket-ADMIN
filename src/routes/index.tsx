@@ -66,16 +66,8 @@ const router = createBrowserRouter([
           { path: ROUTES.spotNew, element: <SpotFormScreen /> },
           { path: ROUTE_PATTERNS.spotEdit, element: <SpotFormScreen /> },
 
-          // レビュー・ユーザーは未接続（mock）。既定は準備中。
-          {
-            path: ROUTES.reviews,
-            element: SHOW_MOCK_SCREENS ? (
-              <ReviewListScreen />
-            ) : (
-              <BlankScreen title="レビュー" />
-            ),
-          },
-          // ユーザーは実 API に接続済み（#34 / #35）のため mock フラグで隠さない。
+          // レビュー・ユーザーは実 API に接続済みのため mock フラグで隠さない。
+          { path: ROUTES.reviews, element: <ReviewListScreen /> },
           { path: ROUTES.users, element: <UserListScreen /> },
 
           // 準備中セクション（#24）
