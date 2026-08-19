@@ -33,12 +33,17 @@ export function UserListScreen() {
 
   // 表示名には英字も混ざるため、大文字小文字を区別せずに絞り込む
   // （`TestUser` を `testuser` で引けないと運営画面の検索として使いにくい）。
+  //
+  // 絞り込みと空表示のメッセージで同じ値を見る。片方が `search`、もう片方が
+  // `search.trim()` だと、空白だけ入力したときに「全件返しているのに
+  // 『該当なし』と出る」というズレが起きる。
+  const keyword = useMemo(() => search.trim().toLowerCase(), [search]);
+
   const filtered = useMemo(() => {
     const users = data?.data ?? [];
-    const keyword = search.trim().toLowerCase();
     if (keyword === "") return users;
     return users.filter((u) => u.name.toLowerCase().includes(keyword));
-  }, [data, search]);
+  }, [data, keyword]);
 
   const totalPages = Math.ceil(filtered.length / DEFAULT_PAGE_SIZE);
   // 削除で件数が減ると page が totalPages を超えて空表示になるため、有効範囲へ丸める。
@@ -133,7 +138,7 @@ export function UserListScreen() {
               rowKey={(u) => u.id}
               loading={isLoading}
               empty={
-                search === ""
+                keyword === ""
                   ? "ユーザーがいません。"
                   : "該当するユーザーがいません。"
               }

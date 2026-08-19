@@ -15,14 +15,17 @@ export function useReviews() {
 /**
  * レビューを削除する（DELETE）。Backend は運営ロール限定。
  *
- * 成功時は一覧キャッシュを無効化して再取得する。画面側で行を消さないのは、
- * 他の運営者の操作も含めたサーバーの状態を正とするため。
+ * 画面側で行を消さないのは、他の運営者の操作も含めたサーバーの状態を正とするため。
+ *
+ * 無効化は `onSuccess` ではなく **`onSettled`**（成功・失敗とも）で行う。
+ * 他の運営者が先に削除していると Backend は 404 を返し、`onSuccess` だけだと
+ * 「既に削除されています」と表示しながら**その行が一覧に残り続ける**。
  */
 export function useDeleteReview() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteReview,
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: reviewsQueryKey });
     },
   });
