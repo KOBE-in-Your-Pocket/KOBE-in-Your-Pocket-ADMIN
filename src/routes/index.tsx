@@ -13,7 +13,6 @@ import { ReviewListScreen } from "../features/reviews";
 import { SpotFormScreen, SpotListScreen } from "../features/spots";
 import { UserListScreen } from "../features/users";
 import { AppLayout, ForbiddenScreen, RootRedirect } from "../layouts";
-import { SHOW_MOCK_SCREENS } from "../lib/feature-flags";
 import { createQueryClient } from "../lib/query-client";
 import { AdminGuard, AuthGuard } from "./guards";
 import { DEV_ROUTES, ROUTE_PATTERNS, ROUTES } from "./paths";
@@ -51,15 +50,8 @@ const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          // ダッシュボードは統計 API が未整備で mock 固定値のため、既定は準備中。
-          {
-            index: true,
-            element: SHOW_MOCK_SCREENS ? (
-              <DashboardScreen />
-            ) : (
-              <BlankScreen title="ダッシュボード" />
-            ),
-          },
+          // ダッシュボード（統計 API に接続済み。Backend #169）
+          { index: true, element: <DashboardScreen /> },
 
           // スポット（実 API 接続済み。一覧 / 追加 / 編集 / 削除）
           { path: ROUTES.spots, element: <SpotListScreen /> },

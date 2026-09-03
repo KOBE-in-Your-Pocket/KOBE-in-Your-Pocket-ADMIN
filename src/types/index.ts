@@ -6,4 +6,5 @@ export * from "./review";
 export * from "./role";
 export * from "./shelter";
 export * from "./spot";
+export * from "./stats";
 export * from "./user";

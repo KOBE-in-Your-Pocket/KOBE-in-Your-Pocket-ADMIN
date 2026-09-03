@@ -1,29 +1,25 @@
 /**
- * ダッシュボード feature の API シーム。Phase 4（統計）で実 API 化。
+ * ダッシュボード feature の API。
  *
- * 現状は mock 固定データを同期で返す。実 API 接続時はこの getter の中身だけを
- * fetch へ差し替えれば、画面側は変更不要。
+ * 集計は Backend の統計 API（`GET /api/v1/stats` / Backend #169）に接続済み。
+ * 以前は統計 API が無く mock 固定データを返していたが、一覧 API をフロントで
+ * 集計する方式は 1 リクエスト 200 件の上限で部分集計にしかならないため、
+ * 集計そのものを Backend へ寄せている。
  */
-import {
-  MOCK_POPULAR_SPOTS,
-  MOCK_RECENT_ACTIONS,
-  MOCK_STATS,
-} from "./mock-dashboard";
-import type { PopularSpot, RecentAction, Stat } from "./mock-dashboard";
+import { apiRequest } from "../../../api";
+import type { DashboardStats } from "../../../types";
 
-export type { PopularSpot, RecentAction, Stat, StatKey } from "./mock-dashboard";
+const STATS_PATH = "/api/v1/stats";
 
-/** 指標カードの値を取得する（mock）。 */
-export function getStats(): Stat[] {
-  return MOCK_STATS;
-}
+/** 管理画面の表示言語。人気スポット・直近レビューの**スポット名の解決にのみ**効く。 */
+const LIST_LANG = "ja";
 
-/** 人気スポット Top5 を取得する（mock）。 */
-export function getPopularSpots(): PopularSpot[] {
-  return MOCK_POPULAR_SPOTS;
-}
-
-/** 直近の操作ログを取得する（mock）。 */
-export function getRecentActions(): RecentAction[] {
-  return MOCK_RECENT_ACTIONS;
+/**
+ * ダッシュボードの集計を取得する（GET /api/v1/stats）。
+ *
+ * Backend は運営ロール限定（`hasRole('OPERATOR')`、ロール階層で admin も通る）。
+ * 総数・今月/先月の件数・人気スポット Top5・直近レビュー 5 件が 1 リクエストで返る。
+ */
+export function fetchDashboardStats(): Promise<DashboardStats> {
+  return apiRequest<DashboardStats>(`${STATS_PATH}?lang=${LIST_LANG}`);
 }
