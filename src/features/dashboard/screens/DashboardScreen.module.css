@@ -15,6 +15,9 @@
 
 .statCard {
   background: var(--color-surface);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: 16px;
@@ -23,6 +26,10 @@
   gap: 12px;
   /* 数値(22px)がカード幅を超えても折り返さず収まるようにする */
   min-width: 0;
+}
+
+.statCard:hover {
+  border-color: var(--color-primary);
 }
 
 .statIcon {
@@ -51,6 +58,15 @@
   font-size: 12px;
   color: var(--color-success);
   font-weight: 600;
+  white-space: nowrap;
+}
+
+.statDeltaDown {
+  color: var(--color-danger);
+}
+
+.statDeltaNeutral {
+  color: var(--color-text-subtle);
 }
 
 .panels {
@@ -101,35 +117,98 @@
   color: var(--color-text-subtle);
 }
 
-/* 最近の操作 */
-.actionList {
+/* 最近のレビュー投稿 */
+.recentList {
   display: flex;
   flex-direction: column;
   font-size: 13px;
 }
 
-.actionRow {
+.recentRow {
   display: grid;
-  grid-template-columns: 132px 78px 1fr;
+  grid-template-columns: 132px 96px 1fr;
+  align-items: center;
   gap: 8px;
   padding: 8px 0;
   border-bottom: 1px solid var(--color-border-soft);
 }
 
-.actionRow:last-child {
+.recentRow:last-child {
   border-bottom: none;
 }
 
-.actionAt {
+.recentAt {
   color: var(--color-text-faint);
 }
 
-.actionWho {
+.recentWho {
   color: var(--color-text-muted);
 }
 
-.actionWhat {
+.recentWhat {
   color: var(--color-text-heading);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* スポット名が長くても★評価を押し出さない */
+.recentSpot {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* パネル見出しと一覧への導線 */
+.panelTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panelLink {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.panelLink:hover {
+  text-decoration: underline;
+}
+
+/* 読み込み中・取得失敗・空表示 */
+.stateBlock {
+  display: flex;
+  justify-content: center;
+  padding: 64px 20px;
+}
+
+.errorBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.errorText {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-danger);
+}
+
+.empty {
+  margin: 0;
+  padding: 24px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-text-subtle);
 }
 
 @media (max-width: 1100px) {
