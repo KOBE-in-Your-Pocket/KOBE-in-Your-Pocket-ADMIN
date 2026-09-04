@@ -1,0 +1,249 @@
+import { useMemo, useState } from "react";
+import {
+  Button,
+  Card,
+  type Column,
+  ConfirmDialog,
+  SearchInput,
+  Table,
+} from "../../../components";
+import type { Genre, LangKey } from "../../../types";
+import { useSpots } from "../../spots";
+import { GenreFormModal } from "../components/GenreFormModal";
+import {
+  useCreateGenre,
+  useDeleteGenre,
+  useGenres,
+  useUpdateGenre,
+} from "../hooks/useGenres";
+import styles from "./GenreListScreen.module.css";
+
+/** 一覧に並べる言語の順序。 */
+const LIST_LANGS: { key: LangKey; header: string }[] = [
+  { key: "ja", header: "日本語" },
+  { key: "en", header: "English" },
+  { key: "ko", header: "한국어" },
+  { key: "zh", header: "中文" },
+];
+
+export function GenreListScreen() {
+  const { data: genres, isLoading, isError } = useGenres();
+
+  // スポット件数は実 API から集計する。ジャンルは mock でも、
+  // 「どのジャンルが実際に使われているか」は実データで判断したいため。
+  // 一覧画面と同じ query key なのでキャッシュを共有する。
+  const { data: spots } = useSpots();
+
+  const createGenre = useCreateGenre();
+  const updateGenre = useUpdateGenre();
+  const deleteGenre = useDeleteGenre();
+
+  const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState<Genre | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Genre | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  /** ジャンルコードごとのスポット件数。実データに存在しないジャンルは 0 件。 */
+  const spotCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    (spots ?? []).forEach((spot) => {
+      counts.set(spot.genre, (counts.get(spot.genre) ?? 0) + 1);
+    });
+    return counts;
+  }, [spots]);
+
+  // コードと全言語の表示名を対象に絞り込む。運営は日本語でも英語でも探すため。
+  const keyword = useMemo(() => search.trim().toLowerCase(), [search]);
+  const filtered = useMemo(
+    () =>
+      (genres ?? []).filter((genre) => {
+        if (keyword === "") return true;
+        const haystack = [genre.code, ...Object.values(genre.labels)]
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(keyword);
+      }),
+    [genres, keyword],
+  );
+
+  const columns: Column<Genre>[] = [
+    { key: "code", header: "コード", primary: true },
+    ...LIST_LANGS.map(({ key, header }) => ({
+      key,
+      header,
+      cell: (genre: Genre) => genre.labels[key],
+    })),
+    {
+      key: "spots",
+      header: "スポット数",
+      align: "end" as const,
+      cell: (genre: Genre) => {
+        const count = spotCounts.get(genre.code) ?? 0;
+        // 0 件は「使われていない」ことが分かるよう淡色にする。削除の判断材料になる。
+        return (
+          <span className={count === 0 ? styles.zeroCount : undefined}>
+            {count}
+          </span>
+        );
+      },
+    },
+    {
+      key: "actions",
+      header: "操作",
+      align: "end",
+      cell: (genre: Genre) => (
+        <div className={styles.rowActions}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setFormError(null);
+              setEditing(genre);
+            }}
+          >
+            編集
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => {
+              setDeleteError(null);
+              setDeleteTarget(genre);
+            }}
+          >
+            削除
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const closeForm = () => {
+    setIsAdding(false);
+    setEditing(null);
+    setFormError(null);
+  };
+
+  const onSubmit = ({
+    code,
+    labels,
+  }: {
+    code: string;
+    labels: Genre["labels"];
+  }) => {
+    setFormError(null);
+    const onError = (error: unknown) => setFormError(errorMessage(error));
+
+    if (editing) {
+      updateGenre.mutate(
+        { code: editing.code, labels },
+        { onSuccess: closeForm, onError },
+      );
+      return;
+    }
+    createGenre.mutate({ code, labels }, { onSuccess: closeForm, onError });
+  };
+
+  const onConfirmDelete = () => {
+    if (!deleteTarget) return;
+    deleteGenre.mutate(deleteTarget.code, {
+      onSuccess: () => setDeleteTarget(null),
+      onError: (error) => setDeleteError(errorMessage(error)),
+    });
+  };
+
+  const deleteCount = deleteTarget
+    ? (spotCounts.get(deleteTarget.code) ?? 0)
+    : 0;
+
+  return (
+    <>
+      <div className={styles.pageHead}>
+        <h1 className={styles.pageTitle}>ジャンル</h1>
+        <Button
+          onClick={() => {
+            setFormError(null);
+            setIsAdding(true);
+          }}
+        >
+          ジャンルを追加
+        </Button>
+      </div>
+
+      <p className={styles.note}>
+        スポットの絞り込みに使う区分です。表示名は Client
+        アプリのジャンルフィルタにも使われます。
+      </p>
+
+      <Card>
+        <div className={styles.toolbar}>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="コード・表示名で検索"
+            aria-label="ジャンルをコード・表示名で検索"
+            maxWidth={300}
+          />
+        </div>
+
+        {deleteError && (
+          <div className={styles.errorBlock} role="alert">
+            {deleteError}
+          </div>
+        )}
+
+        {isError ? (
+          <div className={styles.errorBlock} role="alert">
+            ジャンルの取得に失敗しました。時間をおいて再度お試しください。
+          </div>
+        ) : (
+          <Table
+            columns={columns}
+            data={filtered}
+            rowKey={(genre) => genre.code}
+            loading={isLoading}
+            empty={
+              genres?.length === 0
+                ? "ジャンルはまだ登録されていません。"
+                : "該当するジャンルがありません。"
+            }
+          />
+        )}
+      </Card>
+
+      {(isAdding || editing) && (
+        <GenreFormModal
+          genre={editing ?? undefined}
+          existingCodes={(genres ?? []).map((genre) => genre.code)}
+          saving={createGenre.isPending || updateGenre.isPending}
+          error={formError}
+          onSubmit={onSubmit}
+          onClose={closeForm}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="ジャンルを削除しますか？"
+          message={`「${deleteTarget.labels.ja}」（${deleteTarget.code}）を削除します。`}
+          note={
+            deleteCount > 0
+              ? `このジャンルは ${deleteCount} 件のスポットで使われています。削除するとそのスポットのジャンル表示が不明になります。`
+              : "このジャンルを使っているスポットはありません。"
+          }
+          loading={deleteGenre.isPending}
+          onConfirm={onConfirmDelete}
+          onClose={() => setDeleteTarget(null)}
+        />
+      )}
+    </>
+  );
+}
+
+/** mock / 実 API どちらの失敗もユーザー向け文言にする。 */
+function errorMessage(error: unknown): string {
+  if (error instanceof Error && error.message !== "") return error.message;
+  return "保存に失敗しました。時間をおいて再度お試しください。";
+}
