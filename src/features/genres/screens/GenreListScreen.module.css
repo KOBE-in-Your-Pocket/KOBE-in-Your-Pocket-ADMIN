@@ -49,3 +49,25 @@
     align-items: stretch;
   }
 }
+
+/* スポット件数が取得できていない状態。0 件と読み違えないよう別の見た目にする */
+.unknownCount {
+  color: var(--color-text-faint);
+  font-size: 12px;
+}
+
+.warningBlock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-warning);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-subtle, transparent);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}

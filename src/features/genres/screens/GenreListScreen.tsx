@@ -32,7 +32,13 @@ export function GenreListScreen() {
   // スポット件数は実 API から集計する。ジャンルは mock でも、
   // 「どのジャンルが実際に使われているか」は実データで判断したいため。
   // 一覧画面と同じ query key なのでキャッシュを共有する。
-  const { data: spots } = useSpots();
+  const {
+    data: spots,
+    isLoading: isSpotsLoading,
+    isError: isSpotsError,
+    isFetching: isSpotsFetching,
+    refetch: refetchSpots,
+  } = useSpots();
 
   const createGenre = useCreateGenre();
   const updateGenre = useUpdateGenre();
@@ -45,10 +51,18 @@ export function GenreListScreen() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  /** ジャンルコードごとのスポット件数。実データに存在しないジャンルは 0 件。 */
+  /**
+   * ジャンルコードごとのスポット件数。**取得できていないときは null**。
+   *
+   * 未取得を 0 件として扱わない。0 は「使われていないので消してよい」という
+   * 判断に直結するため、通信エラーで一律 0 になると削除を誤らせる。
+   * 分からないことは分からないと出す。
+   */
   const spotCounts = useMemo(() => {
+    if (spots === undefined) return null;
+
     const counts = new Map<string, number>();
-    (spots ?? []).forEach((spot) => {
+    spots.forEach((spot) => {
       counts.set(spot.genre, (counts.get(spot.genre) ?? 0) + 1);
     });
     return counts;
@@ -80,6 +94,15 @@ export function GenreListScreen() {
       header: "スポット数",
       align: "end" as const,
       cell: (genre: Genre) => {
+        // 取得中と取得失敗を 0 件と区別する。0 は「消してよい」と読めてしまうため。
+        if (spotCounts === null) {
+          return (
+            <span className={styles.unknownCount} title={spotCountHint()}>
+              {isSpotsLoading ? "…" : "不明"}
+            </span>
+          );
+        }
+
         const count = spotCounts.get(genre.code) ?? 0;
         // 0 件は「使われていない」ことが分かるよう淡色にする。削除の判断材料になる。
         return (
@@ -154,10 +177,6 @@ export function GenreListScreen() {
     });
   };
 
-  const deleteCount = deleteTarget
-    ? (spotCounts.get(deleteTarget.code) ?? 0)
-    : 0;
-
   return (
     <>
       <div className={styles.pageHead}>
@@ -191,6 +210,24 @@ export function GenreListScreen() {
         {deleteError && (
           <div className={styles.errorBlock} role="alert">
             {deleteError}
+          </div>
+        )}
+
+        {/*
+          スポット一覧が取れないと件数が出せない。ジャンル自体は操作できるので
+          画面は止めないが、削除の判断材料が欠けていることは明示して再試行させる。
+        */}
+        {isSpotsError && (
+          <div className={styles.warningBlock} role="status">
+            <span>{spotCountHint()}</span>
+            <Button
+              variant="secondary"
+              size="sm"
+              loading={isSpotsFetching}
+              onClick={() => void refetchSpots()}
+            >
+              再試行
+            </Button>
           </div>
         )}
 
@@ -228,11 +265,11 @@ export function GenreListScreen() {
         <ConfirmDialog
           title="ジャンルを削除しますか？"
           message={`「${deleteTarget.labels.ja}」（${deleteTarget.code}）を削除します。`}
-          note={
-            deleteCount > 0
-              ? `このジャンルは ${deleteCount} 件のスポットで使われています。削除するとそのスポットのジャンル表示が不明になります。`
-              : "このジャンルを使っているスポットはありません。"
-          }
+          note={deleteNote(
+            deleteTarget,
+            spotCounts,
+            isSpotsLoading || isSpotsFetching,
+          )}
           loading={deleteGenre.isPending}
           onConfirm={onConfirmDelete}
           onClose={() => setDeleteTarget(null)}
@@ -240,6 +277,36 @@ export function GenreListScreen() {
       )}
     </>
   );
+}
+
+/** スポット件数を出せない理由の説明。一覧のセルと警告表示で同じ文言を使う。 */
+function spotCountHint(): string {
+  return "スポット一覧を取得できないため、各ジャンルの使用件数を表示できません。";
+}
+
+/**
+ * 削除確認の補足。件数が不明なときに「使われていません」と言わないのが要点。
+ *
+ * 0 件と不明を同じ扱いにすると、通信エラーのときに «影響なし» と読める文言が出て、
+ * 使用中のジャンルを消してしまう。件数が確認できないことを伝えて判断を委ねる。
+ */
+function deleteNote(
+  genre: Genre,
+  spotCounts: Map<string, number> | null,
+  isSpotsPending: boolean,
+): string {
+  if (spotCounts === null) {
+    const suffix = isSpotsPending
+      ? "件数の取得中です。表示されるまで待つと影響を確認できます。"
+      : "一覧の「再試行」で取得し直すと影響を確認できます。";
+    return `${spotCountHint()}使用中のジャンルを削除すると、そのスポットのジャンル表示が不明になります。${suffix}`;
+  }
+
+  const count = spotCounts.get(genre.code) ?? 0;
+  if (count > 0) {
+    return `このジャンルは ${count} 件のスポットで使われています。削除するとそのスポットのジャンル表示が不明になります。`;
+  }
+  return "このジャンルを使っているスポットはありません。";
 }
 
 /** mock / 実 API どちらの失敗もユーザー向け文言にする。 */
