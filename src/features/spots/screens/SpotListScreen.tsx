@@ -1,6 +1,6 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { isApiError, isNetworkError } from "../../../api";
 import {
   Button,
   Card,
@@ -15,9 +15,10 @@ import {
 import { DEFAULT_PAGE_SIZE } from "../../../lib/constants";
 import { ROUTES, spotEditPath } from "../../../routes/paths";
 import type { Spot } from "../../../types";
+import { useAuth } from "../../auth";
 import { GENRE_LABELS, GENRES, type Genre } from "../api/spots-api";
 import { SpotThumbnail } from "../components/SpotThumbnail";
-import { spotsQueryKey, useSpots } from "../hooks/useSpots";
+import { useDeleteSpot, useSpots } from "../hooks/useSpots";
 import styles from "./SpotListScreen.module.css";
 
 /** ジャンル別のサムネイル配色（実 API はサムネ色を返さないため画面側で補う）。 */
@@ -37,13 +38,19 @@ function genreLabel(genre: string): string {
 
 export function SpotListScreen() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { data, isLoading, isError } = useSpots();
+  const { user } = useAuth();
+  // Backend の削除 API は admin 専用（`@PreAuthorize("hasRole('ADMIN')")`）。
+  // operator に出すと押しても 403 になるため、ユーザー一覧と同じく列ごと出し分ける。
+  const isAdmin = user?.role === "admin";
+
+  const deleteSpot = useDeleteSpot();
 
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState<Genre | "all">("all");
   const [page, setPage] = useState(1);
   const [target, setTarget] = useState<Spot | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const filtered = useMemo(
     () =>
@@ -69,14 +76,16 @@ export function SpotListScreen() {
   };
 
   const onConfirmDelete = () => {
-    // Backend にスポット削除 API が無いため、当面はキャッシュからのローカル削除
-    // （非永続。再取得で戻る）。削除 API が実装されたら mutation へ差し替える。
-    if (target) {
-      queryClient.setQueryData<Spot[]>(spotsQueryKey, (old) =>
-        old?.filter((s) => s.id !== target.id),
-      );
-    }
-    setTarget(null);
+    if (!target) return;
+    setDeleteError(null);
+    deleteSpot.mutate(target.id, {
+      // 成否にかかわらずダイアログは閉じる。失敗は一覧上部のエラー表示で伝える。
+      onSuccess: () => setTarget(null),
+      onError: (err) => {
+        setTarget(null);
+        setDeleteError(deleteErrorMessage(err));
+      },
+    });
   };
 
   const columns: Column<Spot>[] = [
@@ -103,7 +112,6 @@ export function SpotListScreen() {
     {
       key: "actions",
       header: "操作",
-      align: "end",
       cell: (s) => (
         <div className={styles.rowActions}>
           <Button
@@ -113,9 +121,11 @@ export function SpotListScreen() {
           >
             編集
           </Button>
-          <Button size="sm" variant="danger" onClick={() => setTarget(s)}>
-            削除
-          </Button>
+          {isAdmin && (
+            <Button size="sm" variant="danger" onClick={() => setTarget(s)}>
+              削除
+            </Button>
+          )}
         </div>
       ),
     },
@@ -126,6 +136,12 @@ export function SpotListScreen() {
       <h1 className={styles.pageTitle}>スポット一覧</h1>
 
       <Card>
+        {deleteError !== null && (
+          <div className={styles.errorBlock} role="alert">
+            {deleteError}
+          </div>
+        )}
+
         <div className={styles.filters}>
           <SearchInput
             value={search}
@@ -197,10 +213,32 @@ export function SpotListScreen() {
           title="スポットを削除しますか？"
           message={`「${target.name}」を削除しますか？`}
           note="この操作は元に戻せません。"
+          loading={deleteSpot.isPending}
           onConfirm={onConfirmDelete}
           onClose={() => setTarget(null)}
         />
       )}
     </>
   );
+}
+
+/** 削除失敗の例外をユーザー向け文言に変換する（Backend の生メッセージは出さない）。 */
+function deleteErrorMessage(error: unknown): string {
+  if (isApiError(error)) {
+    if (error.isUnauthorized) {
+      return "ログインが必要です。再度ログインしてください。";
+    }
+    // 削除は admin 専用。ボタンはロールで出し分けているが、権限変更直後などに起こりうる。
+    if (error.isForbidden) {
+      return "スポットを削除する権限がありません。";
+    }
+    // 他の運営者が先に削除した場合。一覧は再取得されるので実害はない。
+    if (error.status === 404) {
+      return "このスポットは既に削除されています。";
+    }
+  }
+  if (isNetworkError(error)) {
+    return error.message;
+  }
+  return "スポットの削除に失敗しました。時間をおいて再度お試しください。";
 }

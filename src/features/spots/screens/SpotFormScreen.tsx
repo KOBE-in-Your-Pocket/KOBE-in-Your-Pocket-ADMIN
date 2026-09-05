@@ -1,7 +1,8 @@
 import { useId, useState } from "react";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { isApiError, isNetworkError } from "../../../api";
-import { Button } from "../../../components";
+import { Button, Spinner } from "../../../components";
+import { ImageUploadField } from "../../media";
 import { ROUTES } from "../../../routes/paths";
 import {
   LANG_KEYS,
@@ -14,10 +15,14 @@ import {
   GENRE_LABELS,
   GENRES,
   LANGS,
-  getSpot,
   type Genre,
+  type SpotDetail,
 } from "../api/spots-api";
-import { useCreateSpot } from "../hooks/useSpots";
+import {
+  useCreateSpot,
+  useSpotDetail,
+  useUpdateSpot,
+} from "../hooks/useSpots";
 import styles from "./SpotFormScreen.module.css";
 
 const EMPTY_LOCALIZED: Localized<string> = { ja: "", en: "", zh: "", ko: "" };
@@ -47,18 +52,99 @@ type SpotForm = {
   imageUrl: string;
 };
 
+/**
+ * スポットの追加・編集画面。
+ *
+ * 編集時は保存に全言語が必要なため、フォームを描画する前に1件を全言語ぶん取得する
+ * （取得できるまで入力させない）。取得後の初期値注入は [SpotFormBody] のマウントで行う。
+ *
+ * [SpotFormBody] には `key` に対象スポットの id を渡して、別スポットへ遷移したら
+ * 必ず再マウントさせる。`initial` は useState の初期値としてしか読まれないため、
+ * 遷移先の詳細がキャッシュ済み（＝ローディングを挟まず再描画される）だと、
+ * state だけ前のスポットのまま `spotId` が入れ替わる。更新は全置換なので、
+ * その状態で保存すると遷移先スポットの全言語データを前のスポットの内容で潰す。
+ */
 export function SpotFormScreen() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const createSpot = useCreateSpot();
-
   const isEdit = id !== undefined;
-  const editing = id !== undefined ? getSpot(id) : undefined;
+  const detail = useSpotDetail(id);
+
+  if (!isEdit) {
+    return <SpotFormBody mode="create" initial={emptyForm()} />;
+  }
+
+  if (detail.isLoading) {
+    return (
+      <>
+        <FormHeaderSkeleton title="スポットを編集" />
+        <div className={styles.panel}>
+          <div className={styles.panelBody}>
+            <div className={styles.loading} role="status">
+              <Spinner label={null} />
+              <span>読み込み中…</span>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (detail.isError || detail.data === undefined) {
+    return (
+      <>
+        <FormHeaderSkeleton title="スポットを編集" />
+        <div className={styles.panel}>
+          <div className={styles.panelBody}>
+            <div className={styles.error} role="alert">
+              {loadErrorMessage(detail.error)}
+            </div>
+            <Button variant="secondary" onClick={() => navigate(ROUTES.spots)}>
+              一覧へ戻る
+            </Button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <SpotFormBody
+      key={id}
+      mode="edit"
+      spotId={id}
+      initial={toForm(detail.data)}
+    />
+  );
+}
+
+/** 読み込み中・エラー時にも同じ見出しを出すためのヘッダ。 */
+function FormHeaderSkeleton({ title }: { title: string }) {
+  return (
+    <div className={styles.header}>
+      <h1 className={styles.title}>{title}</h1>
+    </div>
+  );
+}
+
+type SpotFormBodyProps = {
+  mode: "create" | "edit";
+  /** 編集時のみ必須。 */
+  spotId?: string;
+  initial: SpotForm;
+};
+
+function SpotFormBody({ mode, spotId, initial }: SpotFormBodyProps) {
+  const navigate = useNavigate();
+  const isEdit = mode === "edit";
+
+  const createSpot = useCreateSpot();
+  const updateSpot = useUpdateSpot(spotId ?? "");
+  const saving = isEdit ? updateSpot : createSpot;
 
   const genreId = useId();
   const latId = useId();
   const lngId = useId();
-  const imageUrlId = useId();
   const nameId = useId();
   const categoryLabelId = useId();
   const descriptionId = useId();
@@ -67,21 +153,8 @@ export function SpotFormScreen() {
 
   const [langTab, setLangTab] = useState<LangKey>("ja");
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState<SpotForm>(() => ({
-    // 編集時は一覧が持つ値のみ復元できる（他項目は編集 API 未接続のため空）。
-    name: editing ? { ...EMPTY_LOCALIZED, ja: editing.name } : EMPTY_LOCALIZED,
-    categoryLabel: EMPTY_LOCALIZED,
-    description: EMPTY_LOCALIZED,
-    businessHours: EMPTY_LOCALIZED,
-    address: EMPTY_LOCALIZED,
-    genre: editing?.genre ?? "landmark",
-    lat: editing?.lat ?? DEFAULT_COORD.lat,
-    lng: editing?.lng ?? DEFAULT_COORD.lng,
-    imageUrl: "",
-  }));
-
-  // 存在しない ID の編集は一覧へ戻す
-  if (isEdit && !editing) return <Navigate to={ROUTES.spots} replace />;
+  const [imageUploading, setImageUploading] = useState(false);
+  const [form, setForm] = useState<SpotForm>(initial);
 
   const setLocalized = (field: LocalizedField, value: string) =>
     setForm((prev) => ({
@@ -91,19 +164,14 @@ export function SpotFormScreen() {
 
   const onSave = () => {
     setError(null);
-    // 編集は Backend に更新 API が無い（別 Issue）。従来どおり一覧へ戻す。
-    if (isEdit) {
-      navigate(ROUTES.spots);
-      return;
-    }
     const validationError = validate(form);
     if (validationError !== null) {
       setError(validationError);
       return;
     }
-    createSpot.mutate(buildRequest(form), {
+    saving.mutate(buildRequest(form), {
       onSuccess: () => navigate(ROUTES.spots),
-      onError: (err) => setError(saveErrorMessage(err)),
+      onError: (err) => setError(saveErrorMessage(err, mode)),
     });
   };
 
@@ -117,11 +185,15 @@ export function SpotFormScreen() {
           <Button
             variant="secondary"
             onClick={() => navigate(ROUTES.spots)}
-            disabled={createSpot.isPending}
+            disabled={saving.isPending}
           >
             キャンセル
           </Button>
-          <Button onClick={onSave} loading={createSpot.isPending}>
+          <Button
+            onClick={onSave}
+            loading={saving.isPending}
+            disabled={imageUploading}
+          >
             保存
           </Button>
         </div>
@@ -206,21 +278,15 @@ export function SpotFormScreen() {
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label} htmlFor={imageUrlId}>
-                画像URL
-              </label>
-              <input
-                id={imageUrlId}
-                className={styles.input}
-                type="url"
+              <ImageUploadField
+                label="画像"
                 value={form.imageUrl}
-                placeholder="https://…"
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, imageUrl: e.target.value }))
+                onChange={(imageUrl) =>
+                  setForm((prev) => ({ ...prev, imageUrl }))
                 }
+                onUploadingChange={setImageUploading}
+                disabled={saving.isPending}
               />
-              {/* 画像ファイル選択→S3 アップロードは Backend の presigned URL API が
-                  必要なため別 Issue。当面は画像 URL を直接入力する。 */}
             </div>
           </div>
 
@@ -297,10 +363,51 @@ export function SpotFormScreen() {
   );
 }
 
+/** 追加モードの初期フォーム。 */
+function emptyForm(): SpotForm {
+  return {
+    name: EMPTY_LOCALIZED,
+    categoryLabel: EMPTY_LOCALIZED,
+    description: EMPTY_LOCALIZED,
+    businessHours: EMPTY_LOCALIZED,
+    address: EMPTY_LOCALIZED,
+    genre: "landmark",
+    lat: DEFAULT_COORD.lat,
+    lng: DEFAULT_COORD.lng,
+    imageUrl: "",
+  };
+}
+
+/** 取得した詳細をフォームの初期値へ変換する。 */
+function toForm(detail: SpotDetail): SpotForm {
+  const pick = (field: LocalizedField): Localized<string> => {
+    const value = {} as Localized<string>;
+    for (const lang of LANG_KEYS) {
+      value[lang] = detail.localizations[lang][field];
+    }
+    return value;
+  };
+
+  return {
+    name: pick("name"),
+    categoryLabel: pick("categoryLabel"),
+    description: pick("description"),
+    businessHours: pick("businessHours"),
+    address: pick("address"),
+    // Backend のジャンルは文字列。未知の値でも select が壊れないよう既定へ寄せる。
+    genre: (GENRES as string[]).includes(detail.genre)
+      ? (detail.genre as Genre)
+      : "landmark",
+    lat: String(detail.coordinates.latitude),
+    lng: String(detail.coordinates.longitude),
+    imageUrl: detail.imageUrl,
+  };
+}
+
 /** 送信前のクライアント検証。問題があればユーザー向け文言、無ければ null。 */
 function validate(form: SpotForm): string | null {
   if (form.imageUrl.trim() === "") {
-    return "画像URLを入力してください。";
+    return "画像をアップロードしてください。";
   }
   if (
     form.lat.trim() === "" ||
@@ -321,7 +428,7 @@ function validate(form: SpotForm): string | null {
   return null;
 }
 
-/** フォームを Backend の登録リクエストへ変換する。 */
+/** フォームを Backend のリクエストへ変換する（追加・更新で同じ形）。 */
 function buildRequest(form: SpotForm): RegisterSpotRequest {
   const localizations = {} as Localized<SpotLocalization>;
   for (const lang of LANG_KEYS) {
@@ -348,8 +455,31 @@ function langLabel(lang: LangKey): string {
   return LANGS.find((l) => l.key === lang)?.label ?? lang;
 }
 
-/** 追加失敗の例外をユーザー向け文言に変換する（Backend の生メッセージは出さない）。 */
-function saveErrorMessage(error: unknown): string {
+/** 編集対象の読み込み失敗をユーザー向け文言に変換する。 */
+function loadErrorMessage(error: unknown): string {
+  if (isApiError(error)) {
+    if (error.status === 404) {
+      return "このスポットは見つかりませんでした。削除された可能性があります。";
+    }
+    if (error.isUnauthorized) {
+      return "ログインが必要です。再度ログインしてください。";
+    }
+    // 403 は再試行しても解決しないため、汎用の「時間をおいて」文言に落とさない。
+    if (error.isForbidden) {
+      return "このスポットを表示する権限がありません。";
+    }
+  }
+  if (isNetworkError(error)) {
+    return error.message;
+  }
+  return "スポットの取得に失敗しました。時間をおいて再度お試しください。";
+}
+
+/** 保存失敗の例外をユーザー向け文言に変換する（Backend の生メッセージは出さない）。 */
+function saveErrorMessage(error: unknown, mode: "create" | "edit"): string {
+  const action = mode === "edit" ? "更新" : "追加";
+  const fallback = `スポットの${action}に失敗しました。時間をおいて再度お試しください。`;
+
   if (isApiError(error)) {
     // 未認証（セッション切れ等）。再ログインを促す。
     if (error.isUnauthorized) {
@@ -359,13 +489,17 @@ function saveErrorMessage(error: unknown): string {
     if (error.isForbidden) {
       return "この操作を行う権限がありません。";
     }
+    // 編集中に対象が消えた場合（他の運営者が削除した等）。
+    if (error.status === 404) {
+      return "このスポットは見つかりませんでした。削除された可能性があります。";
+    }
     if (error.violations.length > 0) {
       return "入力内容に誤りがあります。各項目を確認してください。";
     }
-    return "スポットの追加に失敗しました。時間をおいて再度お試しください。";
+    return fallback;
   }
   if (isNetworkError(error)) {
     return error.message;
   }
-  return "スポットの追加に失敗しました。時間をおいて再度お試しください。";
+  return fallback;
 }

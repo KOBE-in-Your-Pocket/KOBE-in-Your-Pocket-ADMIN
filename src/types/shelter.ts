@@ -1,12 +1,18 @@
 import type { ListResponse } from "./api";
 import type { Coordinates } from "./spot";
 
-/** 避難所種別（Backend `ShelterResponse.type` のリテラル）。 */
-export const SHELTER_TYPES = [
-  "designated-emergency-evacuation-site",
-  "designated-evacuation-shelter",
-  "dual-use",
-] as const;
+/**
+ * 避難所種別（Backend `ShelterResponse.type` のリテラル）。
+ *
+ * Backend #162 で、災対法の用語をそのまま slug 化した長い形
+ * （`designated-emergency-evacuation-site` 等）から、Client `ShelterType` と同値の
+ * 短い形へ変更された。意味の対応は次のとおり。
+ *
+ * - `emergency` … 指定緊急避難場所
+ * - `designated` … 指定避難所
+ * - `both` … 兼用
+ */
+export const SHELTER_TYPES = ["emergency", "designated", "both"] as const;
 
 export type ShelterType = (typeof SHELTER_TYPES)[number];
 

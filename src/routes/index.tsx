@@ -9,6 +9,7 @@ import {
 import { AuthProvider, LoginScreen, landingPath, useAuth } from "../features/auth";
 import { BlankScreen } from "../features/blank";
 import { DashboardScreen } from "../features/dashboard";
+import { GenreListScreen } from "../features/genres";
 import { ReviewListScreen } from "../features/reviews";
 import { ShelterListScreen } from "../features/shelters";
 import { SpotFormScreen, SpotListScreen } from "../features/spots";
@@ -51,21 +52,26 @@ const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
+          // ダッシュボード（統計 API に接続済み。Backend #169）
           { index: true, element: <DashboardScreen /> },
 
-          // スポット
+          // スポット（実 API 接続済み。一覧 / 追加 / 編集 / 削除）
           { path: ROUTES.spots, element: <SpotListScreen /> },
           { path: ROUTES.spotNew, element: <SpotFormScreen /> },
           { path: ROUTE_PATTERNS.spotEdit, element: <SpotFormScreen /> },
 
-          // レビュー・ユーザー
+          // レビュー・ユーザーは実 API に接続済みのため mock フラグで隠さない。
           { path: ROUTES.reviews, element: <ReviewListScreen /> },
           { path: ROUTES.users, element: <UserListScreen /> },
 
           // 準備中セクション（#24）
           { path: ROUTES.manner, element: <BlankScreen title="マナー" /> },
+          // 避難所（実 API 接続済み。Backend は読み取りのみ）
           { path: ROUTES.shelter, element: <ShelterListScreen /> },
-          { path: ROUTES.genre, element: <BlankScreen title="ジャンル" /> },
+
+          // ジャンル（mock。Backend のジャンルマスタ API は未実装 / Backend #153）
+          { path: ROUTES.genre, element: <GenreListScreen /> },
+
           { path: ROUTES.stats, element: <BlankScreen title="統計" /> },
 
           // admin 専用（#25）

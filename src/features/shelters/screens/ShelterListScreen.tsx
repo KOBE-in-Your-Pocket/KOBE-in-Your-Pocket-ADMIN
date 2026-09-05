@@ -18,18 +18,18 @@ import { ShelterThumbnail } from "../components/ShelterThumbnail";
 import { useShelters } from "../hooks/useShelters";
 import styles from "./ShelterListScreen.module.css";
 
-/** 避難所種別の表示ラベル。 */
+/** 避難所種別の表示ラベル（Backend #162 の wire 値に対応）。 */
 const TYPE_LABELS: Record<ShelterType, string> = {
-  "designated-emergency-evacuation-site": "指定緊急避難場所",
-  "designated-evacuation-shelter": "指定避難所",
-  "dual-use": "兼用",
+  emergency: "指定緊急避難場所",
+  designated: "指定避難所",
+  both: "兼用",
 };
 
 /** 種別別のサムネイル配色（API はサムネ色を返さないため画面側で補う）。 */
 const TYPE_COLORS: Record<ShelterType, { color: string; tint: string }> = {
-  "designated-emergency-evacuation-site": { color: "#DC2626", tint: "#FBE5E5" },
-  "designated-evacuation-shelter": { color: "#2E7D32", tint: "#E4F1E5" },
-  "dual-use": { color: "#B45309", tint: "#F6ECDE" },
+  emergency: { color: "#DC2626", tint: "#FBE5E5" },
+  designated: { color: "#2E7D32", tint: "#E4F1E5" },
+  both: { color: "#B45309", tint: "#F6ECDE" },
 };
 const DEFAULT_TYPE_COLOR = { color: "#64748B", tint: "#F1F5F9" };
 
