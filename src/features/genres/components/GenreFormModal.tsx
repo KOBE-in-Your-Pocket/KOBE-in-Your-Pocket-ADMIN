@@ -1,7 +1,7 @@
 import { useId, useState } from "react";
 import { Button, Input, Modal } from "../../../components";
 import { LANG_KEYS, type Genre, type LangKey } from "../../../types";
-import { emptyLabels, toGenreCode } from "../api/genres-api";
+import { canDeriveGenreCode, emptyLabels } from "../api/genres-api";
 import styles from "./GenreFormModal.module.css";
 
 /** 言語ごとの入力ラベル。スポット登録フォームの言語タブと同じ並び順にそろえる。 */
@@ -15,8 +15,6 @@ const LANG_LABELS: Record<LangKey, string> = {
 export type GenreFormModalProps = {
   /** 編集対象。未指定なら新規追加。 */
   genre?: Genre;
-  /** 既存のコード一覧。新規追加時の重複チェックに使う。 */
-  existingCodes: string[];
   saving: boolean;
   /** 保存失敗時に表示する文言。 */
   error?: string | null;
@@ -27,17 +25,16 @@ export type GenreFormModalProps = {
 /**
  * ジャンルの追加・編集フォーム。
  *
- * コードは入力欄も表示も持たない。**Backend が English の表示名の slug から決める**
- * （Backend #153）ため運営が決められる値ではなく、スポット登録・一覧も含めて普段は
- * ラベルしか扱わない。常に見せると「良いコードにするために English を変える」動機を
- * 生むが、English は Client アプリに出る表示名なので触らせたくない。
+ * コードは入力欄も表示も持たない。**Backend が English の表示名の slug から採番する**
+ * （`GenreCode.fromLabel` / #153）ため運営が決められる値ではなく、スポット登録・一覧も
+ * 含めて普段はラベルしか扱わない。常に見せると「良いコードにするために English を変える」
+ * 動機を生むが、English は Client アプリに出る表示名なので触らせたくない。
  *
- * 例外は slug が既存と衝突して保存できないときだけ。理由が分からないと直せないので、
- * そのエラー文言にだけコードを出す。コードそのものは一覧の「コード」列で確認できる。
+ * 予測して見せないのは正確さの問題でもある。既存と衝突した場合、Backend は 409 にせず
+ * `night-view-2` のような連番を付けるため、確定値は応答を見るまで分からない。
  */
 export function GenreFormModal({
   genre,
-  existingCodes,
   saving,
   error,
   onSubmit,
@@ -52,9 +49,7 @@ export function GenreFormModal({
   const [touched, setTouched] = useState(false);
 
   // 編集時はコードが確定済みで English を変えても変わらないため、検査しない。
-  const codeError = isEdit
-    ? null
-    : validateCode(toGenreCode(labels.en), labels.en, existingCodes);
+  const codeError = isEdit ? null : validateEnglishLabel(labels.en);
   const missingLangs = LANG_KEYS.filter((lang) => labels[lang].trim() === "");
   const canSubmit = codeError === null && missingLangs.length === 0;
 
@@ -148,22 +143,18 @@ export function GenreFormModal({
 }
 
 /**
- * 新規追加時、English から作られるコードのチェック。問題が無ければ null。
+ * 新規追加時、English の表示名からコードを作れるかのチェック。問題が無ければ null。
+ *
+ * 重複は見ない。Backend が連番で回避するため、ADMIN が「既に使われています」と
+ * 止めるのは実際の挙動と違う。
  *
  * English が空のときは「入力してください。」を出す側に任せる。二重にエラーを出しても
  * 直し方は増えない。
  */
-function validateCode(
-  code: string,
-  en: string,
-  existingCodes: string[],
-): string | null {
+function validateEnglishLabel(en: string): string | null {
   if (en.trim() === "") return null;
-  if (code === "") {
+  if (!canDeriveGenreCode(en)) {
     return "半角英数字を含む名前にしてください。この名前から識別子を作れません。";
-  }
-  if (existingCodes.includes(code)) {
-    return `既存のジャンルと同じ識別子（${code}）になります。別の名前にしてください。`;
   }
   return null;
 }

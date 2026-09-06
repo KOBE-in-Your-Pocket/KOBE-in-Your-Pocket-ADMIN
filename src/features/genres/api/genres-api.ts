@@ -1,132 +1,97 @@
 /**
- * ジャンル feature の API シーム。**現状は mock（メモリ保持）**。
- *
- * Backend にジャンルマスタと管理 API がまだ無い（Backend #153）。スポットの `genre` は
- * VARCHAR の文字列で、表示名は ADMIN と Client がそれぞれハードコードしている。
- *
- * 実 API ができたら、この 4 関数の中身を `apiRequest` に差し替えるだけで画面は変更不要。
- * 想定しているエンドポイントは次の形（Backend #153 の案）。
+ * ジャンル feature の API（Backend #153）。
  *
  * ```
- * GET    /api/v1/tourism/genres
- * POST   /api/v1/tourism/genres
- * PUT    /api/v1/tourism/genres/{code}
- * DELETE /api/v1/tourism/genres/{code}
+ * GET    /api/v1/tourism/genres          公開。全言語のラベルとスポット件数を返す
+ * POST   /api/v1/tourism/genres          OPERATOR 以上
+ * PUT    /api/v1/tourism/genres/{code}   OPERATOR 以上
+ * DELETE /api/v1/tourism/genres/{code}   OPERATOR 以上。使用中は 409
  * ```
+ *
+ * 表示名は `?lang=` で 1 言語に解決せず、全言語まとめて返る。編集フォームが全言語を
+ * 必要とするため、スポット詳細のような言語ごとの並行取得（`fetchSpotDetail`）が要らない。
  */
+import { apiRequest } from "../../../api";
 import { LANG_KEYS, type Genre, type GenreInput } from "../../../types";
 
-/** mock が模すネットワーク遅延（ミリ秒）。読み込み表示の確認用。 */
-const MOCK_LATENCY_MS = 250;
+const GENRES_PATH = "/api/v1/tourism/genres";
+
+/** Backend の `GenreResponse`。`labels` は言語コード → 表示名。 */
+type GenreResponse = {
+  code: string;
+  displayOrder: number;
+  labels: Record<string, string>;
+  /** 一覧のみ。登録・更新の応答では null。 */
+  spotCount: number | null;
+};
 
 /**
- * 初期データ。**本番のスポット 15 件が実際に使っている 5 種**に合わせている。
+ * ジャンル一覧を取得する。
  *
- * 日本語ラベルは ADMIN の `GENRE_LABELS`、他言語はスポットの `category.label` の
- * 実データ（例: onsen → Hot Spring / 온천）に寄せた。
+ * 並びは Backend が `display_order` → `code` で返す。ADMIN で並べ替えないのは、
+ * Client のジャンルフィルタに出る順序をそのまま運営に見せるため。
  */
-const INITIAL_GENRES: Genre[] = [
-  {
-    code: "landmark",
-    labels: { ja: "名所", en: "Landmark", ko: "명소", zh: "名胜" },
-  },
-  {
-    code: "nature",
-    labels: { ja: "自然", en: "Nature", ko: "자연", zh: "自然" },
-  },
-  {
-    code: "history",
-    labels: { ja: "歴史", en: "History", ko: "역사", zh: "历史" },
-  },
-  {
-    code: "gourmet",
-    labels: { ja: "グルメ", en: "Gourmet", ko: "미식", zh: "美食" },
-  },
-  {
-    code: "onsen",
-    labels: { ja: "温泉", en: "Hot Spring", ko: "온천", zh: "温泉" },
-  },
-];
-
-/**
- * mock の保持先。モジュールスコープのため**リロードで初期値に戻る**。
- *
- * 実 API 化までの暫定。追加・編集・削除が一覧に反映される様子を確認できるようにする。
- */
-let genres: Genre[] = INITIAL_GENRES.map(clone);
-
-function clone(genre: Genre): Genre {
-  return { code: genre.code, labels: { ...genre.labels } };
-}
-
-function delay(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, MOCK_LATENCY_MS));
-}
-
-/** ジャンルの並び順。運営が探しやすいよう code の昇順で安定させる。 */
-function sortByCode(list: Genre[]): Genre[] {
-  return [...list].sort((a, b) => a.code.localeCompare(b.code));
-}
-
-/** ジャンル一覧を取得する（mock）。 */
 export async function fetchGenres(): Promise<Genre[]> {
-  await delay();
-  return sortByCode(genres).map(clone);
+  const responses = await apiRequest<GenreResponse[]>(GENRES_PATH);
+  return responses.map(toGenre);
 }
 
 /**
- * ジャンルを追加する（mock）。
+ * ジャンルを追加する。
  *
- * `code` は **Backend が英語表示名の slug から決める**（Backend #153）ため、リクエストには
- * 含めず、ここでも `toGenreCode` で同じ規則を再現する。実 API 化後はレスポンスの
- * `code` をそのまま使う。
+ * `code` は Backend が `labels.en` から採番する。既存と衝突した場合は 409 ではなく
+ * `night-view-2` のように連番が付く（同じ英語名の別ジャンルを作ること自体は正当な操作で、
+ * ID の衝突は Backend の内部事情、という判断）。**採番結果は応答で確定する**ため、
+ * ADMIN 側で事前に予測して見せない。
  *
- * slug が既存と衝突すると、その値を参照している既存スポットのジャンルがどちらを
- * 指すか決まらなくなる。ここで弾く。
+ * 英語表示名から slug を作れない（記号だけ等）場合は 400。
  */
-export async function createGenre(input: GenreInput): Promise<Genre> {
-  await delay();
-  const code = toGenreCode(input.labels.en);
-  if (code === "") {
-    throw new Error(
-      "英語の表示名からコードを作れませんでした。半角英数字を含めてください。",
-    );
-  }
-  if (genres.some((g) => g.code === code)) {
-    throw new Error(`コード「${code}」のジャンルは既に登録されています。`);
-  }
-  const created: Genre = { code, labels: { ...input.labels } };
-  genres = [...genres, created];
-  return clone(created);
+export function createGenre(input: GenreInput): Promise<Genre> {
+  return apiRequest<GenreResponse>(GENRES_PATH, {
+    method: "POST",
+    json: input,
+  }).then(toGenre);
 }
 
 /**
- * ジャンルの表示名を更新する（mock）。
+ * ジャンルを更新する（全置換）。変更できるのは表示名と並び順のみ。
  *
- * `code` は既存スポットが参照する識別子のため、英語表示名を編集しても変わらない。
- * コードを変えたい場合は新しく作り直し、スポット側を付け替える運用になる。
+ * `code` はパスの値がそのまま使われ、英語表示名を変えても追従しない。
+ * `displayOrder` を省くと Backend の既定値 0 に落ちるため、取得した値を必ず送る。
  */
-export async function updateGenre(
-  code: string,
-  labels: Genre["labels"],
-): Promise<Genre> {
-  await delay();
-  const target = genres.find((g) => g.code === code);
-  if (!target) {
-    throw new Error("対象のジャンルが見つかりませんでした。");
-  }
-  const updated: Genre = { code, labels: { ...labels } };
-  genres = genres.map((g) => (g.code === code ? updated : g));
-  return clone(updated);
+export function updateGenre(code: string, input: GenreInput): Promise<Genre> {
+  return apiRequest<GenreResponse>(
+    `${GENRES_PATH}/${encodeURIComponent(code)}`,
+    { method: "PUT", json: input },
+  ).then(toGenre);
 }
 
-/** ジャンルを削除する（mock）。 */
-export async function deleteGenre(code: string): Promise<void> {
-  await delay();
-  if (!genres.some((g) => g.code === code)) {
-    throw new Error("対象のジャンルが見つかりませんでした。");
-  }
-  genres = genres.filter((g) => g.code !== code);
+/**
+ * ジャンルを削除する。成功時は 204（ボディ無し）。
+ *
+ * **スポットから参照されている場合は 409**。運営は先にスポットのジャンルを付け替える。
+ */
+export function deleteGenre(code: string): Promise<void> {
+  return apiRequest<void>(`${GENRES_PATH}/${encodeURIComponent(code)}`, {
+    method: "DELETE",
+  });
+}
+
+/**
+ * 応答を画面が扱う形にする。
+ *
+ * `labels` を対応言語ぶんの固定キーに詰め直す。Backend は全言語を返す不変条件
+ * （`GenreLocalizations`）を持つが、欠けた言語があっても画面を壊さず空欄として見せる。
+ */
+function toGenre(response: GenreResponse): Genre {
+  return {
+    code: response.code,
+    displayOrder: response.displayOrder,
+    labels: Object.fromEntries(
+      LANG_KEYS.map((lang) => [lang, response.labels[lang] ?? ""]),
+    ) as Genre["labels"],
+    spotCount: response.spotCount,
+  };
 }
 
 /** 全対応言語ぶんの空ラベル。フォームの初期値に使う。 */
@@ -137,16 +102,12 @@ export function emptyLabels(): Genre["labels"] {
 }
 
 /**
- * 英語表示名から `code` を作る。Backend の採番規則（Backend #153）に合わせる。
+ * English の表示名から code を作れるか（Backend `GenreCode.fromLabel` と同じ判定）。
  *
- * 実 API では Backend が決めた値が正だが、フォームで「このコードになります」と
- * 事前に見せ、重複も送信前に気付けるようにするため ADMIN 側でも同じ規則を持つ。
- *
- * 例: `Hot Spring` → `hot-spring`、`Cafe & Bar` → `cafe-bar`
+ * Backend は英数字以外を区切りとして slug にするため、半角英数字が 1 文字も無いと
+ * 生成できず 400 になる。**採番結果そのものは予測しない**（衝突時の連番は Backend が
+ * 決める）が、この 1 点だけは入力中に分かるので往復せずその場で伝える。
  */
-export function toGenreCode(en: string): string {
-  return en
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+export function canDeriveGenreCode(en: string): boolean {
+  return /[a-z0-9]/.test(en.toLowerCase());
 }
