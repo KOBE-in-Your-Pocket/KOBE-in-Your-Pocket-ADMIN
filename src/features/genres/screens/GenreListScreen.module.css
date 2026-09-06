@@ -71,3 +71,13 @@
   font-size: 13px;
   color: var(--color-text-muted);
 }
+
+/* 日本語名に添えるコード。行の見出しより一段落として、拾い読みの邪魔をしない */
+.code {
+  display: block;
+  margin-top: 2px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--color-text-faint);
+}

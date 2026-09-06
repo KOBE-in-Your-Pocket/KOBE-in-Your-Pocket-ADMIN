@@ -11,14 +11,23 @@ import type { Localized } from "./language";
  * その解決として、マスタ側で対応言語ぶんの表示名を持つ形にする。
  */
 export type Genre = {
-  /** スポットの `genre` と突き合わせる識別子。作成後は変更しない。 */
+  /**
+   * スポットの `genre` と突き合わせる識別子。
+   *
+   * **Backend が英語表示名の slug から採番する**（Backend #153）。ADMIN からは
+   * 送らない。作成後は変更されない。
+   */
   code: string;
   /** 表示名。対応言語すべてを持つ。 */
   labels: Localized<string>;
 };
 
-/** ジャンルの登録・更新で送る内容。`code` は登録時のみ指定できる。 */
+/**
+ * ジャンルの登録・更新で送る内容。
+ *
+ * `code` は含めない。Backend が `labels.en` の slug から決めるため、ADMIN が送っても
+ * 無視される（送ると「入力したコードが採用される」と誤解させる）。
+ */
 export type GenreInput = {
-  code: string;
   labels: Localized<string>;
 };

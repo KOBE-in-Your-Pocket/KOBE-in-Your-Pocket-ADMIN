@@ -18,9 +18,12 @@ import {
 } from "../hooks/useGenres";
 import styles from "./GenreListScreen.module.css";
 
-/** 一覧に並べる言語の順序。 */
-const LIST_LANGS: { key: LangKey; header: string }[] = [
-  { key: "ja", header: "日本語" },
+/**
+ * 日本語以外の表示名の列。
+ *
+ * 日本語は行の見出しとして別に置く（他の一覧画面と同じく、primary 列は人が読む名前）。
+ */
+const SUB_LANGS: { key: LangKey; header: string }[] = [
   { key: "en", header: "English" },
   { key: "ko", header: "한국어" },
   { key: "zh", header: "中文" },
@@ -68,7 +71,7 @@ export function GenreListScreen() {
     return counts;
   }, [spots]);
 
-  // コードと全言語の表示名を対象に絞り込む。運営は日本語でも英語でも探すため。
+  // 全言語の表示名とコードを対象に絞り込む。運営は日本語でも英語でも探すため。
   const keyword = useMemo(() => search.trim().toLowerCase(), [search]);
   const filtered = useMemo(
     () =>
@@ -83,8 +86,24 @@ export function GenreListScreen() {
   );
 
   const columns: Column<Genre>[] = [
-    { key: "code", header: "コード", primary: true },
-    ...LIST_LANGS.map(({ key, header }) => ({
+    {
+      key: "ja",
+      header: "日本語",
+      primary: true,
+      /*
+        コードは列にせず日本語名に添える。運営が決める値ではなく（Backend が
+        English の slug から採番する）普段の操作でも使わないため、行の見出しには
+        しない。ただし Backend のデータに入っているのはこの値で、保存エラーも
+        この値を指すため、確認できる場所は一覧に残す。
+      */
+      cell: (genre: Genre) => (
+        <>
+          {genre.labels.ja}
+          <span className={styles.code}>{genre.code}</span>
+        </>
+      ),
+    },
+    ...SUB_LANGS.map(({ key, header }) => ({
       key,
       header,
       cell: (genre: Genre) => genre.labels[key],
@@ -149,13 +168,8 @@ export function GenreListScreen() {
     setFormError(null);
   };
 
-  const onSubmit = ({
-    code,
-    labels,
-  }: {
-    code: string;
-    labels: Genre["labels"];
-  }) => {
+  // コードは Backend が labels.en の slug から決めるため、追加時も送らない。
+  const onSubmit = (labels: Genre["labels"]) => {
     setFormError(null);
     const onError = (error: unknown) => setFormError(errorMessage(error));
 
@@ -166,7 +180,7 @@ export function GenreListScreen() {
       );
       return;
     }
-    createGenre.mutate({ code, labels }, { onSuccess: closeForm, onError });
+    createGenre.mutate({ labels }, { onSuccess: closeForm, onError });
   };
 
   const onConfirmDelete = () => {
@@ -201,8 +215,8 @@ export function GenreListScreen() {
           <SearchInput
             value={search}
             onChange={setSearch}
-            placeholder="コード・表示名で検索"
-            aria-label="ジャンルをコード・表示名で検索"
+            placeholder="表示名・コードで検索"
+            aria-label="ジャンルを表示名・コードで検索"
             maxWidth={300}
           />
         </div>
