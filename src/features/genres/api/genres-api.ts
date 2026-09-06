@@ -77,15 +77,25 @@ export async function fetchGenres(): Promise<Genre[]> {
 /**
  * ジャンルを追加する（mock）。
  *
- * `code` はスポットとの紐付けに使う識別子なので、重複を許すと既存スポットの
- * ジャンルがどちらを指すか決まらなくなる。ここで弾く。
+ * `code` は **Backend が英語表示名の slug から決める**（Backend #153）ため、リクエストには
+ * 含めず、ここでも `toGenreCode` で同じ規則を再現する。実 API 化後はレスポンスの
+ * `code` をそのまま使う。
+ *
+ * slug が既存と衝突すると、その値を参照している既存スポットのジャンルがどちらを
+ * 指すか決まらなくなる。ここで弾く。
  */
 export async function createGenre(input: GenreInput): Promise<Genre> {
   await delay();
-  if (genres.some((g) => g.code === input.code)) {
-    throw new Error(`コード「${input.code}」のジャンルは既に登録されています。`);
+  const code = toGenreCode(input.labels.en);
+  if (code === "") {
+    throw new Error(
+      "英語の表示名からコードを作れませんでした。半角英数字を含めてください。",
+    );
   }
-  const created = clone(input);
+  if (genres.some((g) => g.code === code)) {
+    throw new Error(`コード「${code}」のジャンルは既に登録されています。`);
+  }
+  const created: Genre = { code, labels: { ...input.labels } };
   genres = [...genres, created];
   return clone(created);
 }
@@ -93,8 +103,8 @@ export async function createGenre(input: GenreInput): Promise<Genre> {
 /**
  * ジャンルの表示名を更新する（mock）。
  *
- * `code` は既存スポットが参照する識別子のため変更できない。変更したい場合は
- * 新しいコードで作り直し、スポット側を付け替える運用になる。
+ * `code` は既存スポットが参照する識別子のため、英語表示名を編集しても変わらない。
+ * コードを変えたい場合は新しく作り直し、スポット側を付け替える運用になる。
  */
 export async function updateGenre(
   code: string,
@@ -124,4 +134,19 @@ export function emptyLabels(): Genre["labels"] {
   return Object.fromEntries(
     LANG_KEYS.map((lang) => [lang, ""]),
   ) as Genre["labels"];
+}
+
+/**
+ * 英語表示名から `code` を作る。Backend の採番規則（Backend #153）に合わせる。
+ *
+ * 実 API では Backend が決めた値が正だが、フォームで「このコードになります」と
+ * 事前に見せ、重複も送信前に気付けるようにするため ADMIN 側でも同じ規則を持つ。
+ *
+ * 例: `Hot Spring` → `hot-spring`、`Cafe & Bar` → `cafe-bar`
+ */
+export function toGenreCode(en: string): string {
+  return en
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
