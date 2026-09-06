@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { isApiError, isNetworkError } from "../../../api";
 import {
   Button,
   Card,
@@ -7,8 +8,7 @@ import {
   SearchInput,
   Table,
 } from "../../../components";
-import type { Genre, LangKey } from "../../../types";
-import { useSpots } from "../../spots";
+import type { Genre, GenreInput, LangKey } from "../../../types";
 import { GenreFormModal } from "../components/GenreFormModal";
 import {
   useCreateGenre,
@@ -30,18 +30,7 @@ const SUB_LANGS: { key: LangKey; header: string }[] = [
 ];
 
 export function GenreListScreen() {
-  const { data: genres, isLoading, isError } = useGenres();
-
-  // スポット件数は実 API から集計する。ジャンルは mock でも、
-  // 「どのジャンルが実際に使われているか」は実データで判断したいため。
-  // 一覧画面と同じ query key なのでキャッシュを共有する。
-  const {
-    data: spots,
-    isLoading: isSpotsLoading,
-    isError: isSpotsError,
-    isFetching: isSpotsFetching,
-    refetch: refetchSpots,
-  } = useSpots();
+  const { data: genres, isLoading, isError, error } = useGenres();
 
   const createGenre = useCreateGenre();
   const updateGenre = useUpdateGenre();
@@ -53,23 +42,6 @@ export function GenreListScreen() {
   const [deleteTarget, setDeleteTarget] = useState<Genre | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  /**
-   * ジャンルコードごとのスポット件数。**取得できていないときは null**。
-   *
-   * 未取得を 0 件として扱わない。0 は「使われていないので消してよい」という
-   * 判断に直結するため、通信エラーで一律 0 になると削除を誤らせる。
-   * 分からないことは分からないと出す。
-   */
-  const spotCounts = useMemo(() => {
-    if (spots === undefined) return null;
-
-    const counts = new Map<string, number>();
-    spots.forEach((spot) => {
-      counts.set(spot.genre, (counts.get(spot.genre) ?? 0) + 1);
-    });
-    return counts;
-  }, [spots]);
 
   // 全言語の表示名とコードを対象に絞り込む。運営は日本語でも英語でも探すため。
   const keyword = useMemo(() => search.trim().toLowerCase(), [search]);
@@ -93,8 +65,8 @@ export function GenreListScreen() {
       /*
         コードは列にせず日本語名に添える。運営が決める値ではなく（Backend が
         English の slug から採番する）普段の操作でも使わないため、行の見出しには
-        しない。ただし Backend のデータに入っているのはこの値で、保存エラーも
-        この値を指すため、確認できる場所は一覧に残す。
+        しない。ただし Backend のデータに入っているのはこの値なので、確認できる
+        場所は一覧に残す。
       */
       cell: (genre: Genre) => (
         <>
@@ -112,53 +84,49 @@ export function GenreListScreen() {
       key: "spots",
       header: "スポット数",
       align: "end" as const,
-      cell: (genre: Genre) => {
-        // 取得中と取得失敗を 0 件と区別する。0 は「消してよい」と読めてしまうため。
-        if (spotCounts === null) {
-          return (
-            <span className={styles.unknownCount} title={spotCountHint()}>
-              {isSpotsLoading ? "…" : "不明"}
-            </span>
-          );
-        }
-
-        const count = spotCounts.get(genre.code) ?? 0;
-        // 0 件は「使われていない」ことが分かるよう淡色にする。削除の判断材料になる。
-        return (
-          <span className={count === 0 ? styles.zeroCount : undefined}>
-            {count}
-          </span>
-        );
-      },
+      // 0 件は「使われていない＝削除できる」ことが分かるよう淡色にする。
+      cell: (genre: Genre) => (
+        <span className={genre.spotCount === 0 ? styles.zeroCount : undefined}>
+          {genre.spotCount}
+        </span>
+      ),
     },
     {
       key: "actions",
       header: "操作",
       align: "end",
-      cell: (genre: Genre) => (
-        <div className={styles.rowActions}>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              setFormError(null);
-              setEditing(genre);
-            }}
-          >
-            編集
-          </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => {
-              setDeleteError(null);
-              setDeleteTarget(genre);
-            }}
-          >
-            削除
-          </Button>
-        </div>
-      ),
+      cell: (genre: Genre) => {
+        // 使用中のジャンルは Backend が 409 で拒否する。押せば必ず失敗するボタンは
+        // 押させず、理由を添える（disabled 要素は title を出さないので span で包む）。
+        const inUse = (genre.spotCount ?? 0) > 0;
+        return (
+          <div className={styles.rowActions}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setFormError(null);
+                setEditing(genre);
+              }}
+            >
+              編集
+            </Button>
+            <span title={inUse ? inUseHint(genre.spotCount) : undefined}>
+              <Button
+                variant="danger"
+                size="sm"
+                disabled={inUse}
+                onClick={() => {
+                  setDeleteError(null);
+                  setDeleteTarget(genre);
+                }}
+              >
+                削除
+              </Button>
+            </span>
+          </div>
+        );
+      },
     },
   ];
 
@@ -168,26 +136,40 @@ export function GenreListScreen() {
     setFormError(null);
   };
 
-  // コードは Backend が labels.en の slug から決めるため、追加時も送らない。
+  /**
+   * 保存する。コードは Backend が採番するため送らない。
+   *
+   * `displayOrder` は ADMIN に並べ替え UI が無い一方、送らないと Backend の既定値 0 に
+   * 落ちて Client のジャンルフィルタの並びが変わってしまう。編集は取得した値を維持し、
+   * 追加は末尾に置く。
+   */
   const onSubmit = (labels: Genre["labels"]) => {
     setFormError(null);
-    const onError = (error: unknown) => setFormError(errorMessage(error));
+    const onError = (error: unknown) =>
+      setFormError(saveErrorMessage(error, editing ? "edit" : "create"));
 
     if (editing) {
+      const input: GenreInput = {
+        displayOrder: editing.displayOrder,
+        labels,
+      };
       updateGenre.mutate(
-        { code: editing.code, labels },
+        { code: editing.code, input },
         { onSuccess: closeForm, onError },
       );
       return;
     }
-    createGenre.mutate({ labels }, { onSuccess: closeForm, onError });
+    createGenre.mutate(
+      { displayOrder: nextDisplayOrder(genres), labels },
+      { onSuccess: closeForm, onError },
+    );
   };
 
   const onConfirmDelete = () => {
     if (!deleteTarget) return;
     deleteGenre.mutate(deleteTarget.code, {
       onSuccess: () => setDeleteTarget(null),
-      onError: (error) => setDeleteError(errorMessage(error)),
+      onError: (error) => setDeleteError(deleteErrorMessage(error)),
     });
   };
 
@@ -227,27 +209,9 @@ export function GenreListScreen() {
           </div>
         )}
 
-        {/*
-          スポット一覧が取れないと件数が出せない。ジャンル自体は操作できるので
-          画面は止めないが、削除の判断材料が欠けていることは明示して再試行させる。
-        */}
-        {isSpotsError && (
-          <div className={styles.warningBlock} role="status">
-            <span>{spotCountHint()}</span>
-            <Button
-              variant="secondary"
-              size="sm"
-              loading={isSpotsFetching}
-              onClick={() => void refetchSpots()}
-            >
-              再試行
-            </Button>
-          </div>
-        )}
-
         {isError ? (
           <div className={styles.errorBlock} role="alert">
-            ジャンルの取得に失敗しました。時間をおいて再度お試しください。
+            {loadErrorMessage(error)}
           </div>
         ) : (
           <Table
@@ -267,7 +231,6 @@ export function GenreListScreen() {
       {(isAdding || editing) && (
         <GenreFormModal
           genre={editing ?? undefined}
-          existingCodes={(genres ?? []).map((genre) => genre.code)}
           saving={createGenre.isPending || updateGenre.isPending}
           error={formError}
           onSubmit={onSubmit}
@@ -279,11 +242,7 @@ export function GenreListScreen() {
         <ConfirmDialog
           title="ジャンルを削除しますか？"
           message={`「${deleteTarget.labels.ja}」（${deleteTarget.code}）を削除します。`}
-          note={deleteNote(
-            deleteTarget,
-            spotCounts,
-            isSpotsLoading || isSpotsFetching,
-          )}
+          note="このジャンルを使っているスポットはありません。削除すると元に戻せません。"
           loading={deleteGenre.isPending}
           onConfirm={onConfirmDelete}
           onClose={() => setDeleteTarget(null)}
@@ -293,38 +252,82 @@ export function GenreListScreen() {
   );
 }
 
-/** スポット件数を出せない理由の説明。一覧のセルと警告表示で同じ文言を使う。 */
-function spotCountHint(): string {
-  return "スポット一覧を取得できないため、各ジャンルの使用件数を表示できません。";
-}
-
 /**
- * 削除確認の補足。件数が不明なときに「使われていません」と言わないのが要点。
+ * 追加するジャンルの並び順。既存の最後尾に置く。
  *
- * 0 件と不明を同じ扱いにすると、通信エラーのときに «影響なし» と読める文言が出て、
- * 使用中のジャンルを消してしまう。件数が確認できないことを伝えて判断を委ねる。
+ * 0 を送ると先頭に割り込む。運営が意図していない位置に入るより、末尾に積む方が
+ * 予想を裏切らない（並べ替え UI ができるまでの暫定）。
  */
-function deleteNote(
-  genre: Genre,
-  spotCounts: Map<string, number> | null,
-  isSpotsPending: boolean,
-): string {
-  if (spotCounts === null) {
-    const suffix = isSpotsPending
-      ? "件数の取得中です。表示されるまで待つと影響を確認できます。"
-      : "一覧の「再試行」で取得し直すと影響を確認できます。";
-    return `${spotCountHint()}使用中のジャンルを削除すると、そのスポットのジャンル表示が不明になります。${suffix}`;
-  }
-
-  const count = spotCounts.get(genre.code) ?? 0;
-  if (count > 0) {
-    return `このジャンルは ${count} 件のスポットで使われています。削除するとそのスポットのジャンル表示が不明になります。`;
-  }
-  return "このジャンルを使っているスポットはありません。";
+function nextDisplayOrder(genres: Genre[] | undefined): number {
+  if (genres === undefined || genres.length === 0) return 1;
+  return Math.max(...genres.map((genre) => genre.displayOrder)) + 1;
 }
 
-/** mock / 実 API どちらの失敗もユーザー向け文言にする。 */
-function errorMessage(error: unknown): string {
-  if (error instanceof Error && error.message !== "") return error.message;
-  return "保存に失敗しました。時間をおいて再度お試しください。";
+/** 削除できない理由。件数を出して、何件付け替えれば消せるのかが分かるようにする。 */
+function inUseHint(spotCount: number | null): string {
+  const count = spotCount ?? 0;
+  return `${count} 件のスポットで使われているため削除できません。先にそのスポットのジャンルを変更してください。`;
+}
+
+/** 一覧の取得失敗をユーザー向け文言に変換する。 */
+function loadErrorMessage(error: unknown): string {
+  if (isApiError(error) && error.isUnauthorized) {
+    return "ログインが必要です。再度ログインしてください。";
+  }
+  if (isNetworkError(error)) {
+    return error.message;
+  }
+  return "ジャンルの取得に失敗しました。時間をおいて再度お試しください。";
+}
+
+/** 保存失敗の例外をユーザー向け文言に変換する（Backend の生メッセージは出さない）。 */
+function saveErrorMessage(error: unknown, mode: "create" | "edit"): string {
+  const action = mode === "edit" ? "更新" : "追加";
+
+  if (isApiError(error)) {
+    if (error.isUnauthorized) {
+      return "ログインが必要です。再度ログインしてください。";
+    }
+    // 書き込みは運営ロール限定。権限変更直後などに起こりうる。
+    if (error.isForbidden) {
+      return "ジャンルを編集する権限がありません。";
+    }
+    // 編集中に他の運営者が削除した場合。一覧は再取得されるので行も消える。
+    if (error.status === 404) {
+      return "このジャンルは既に削除されています。";
+    }
+    // 英語表示名から識別子を作れない場合（記号だけ等）。フォーム側でも弾いているが、
+    // 規則が Backend と食い違ったときに黙って失敗しないよう文言を用意する。
+    if (error.status === 400) {
+      return "入力内容が正しくありません。English の表示名に半角英数字が含まれているか確認してください。";
+    }
+  }
+  if (isNetworkError(error)) {
+    return error.message;
+  }
+  return `ジャンルの${action}に失敗しました。時間をおいて再度お試しください。`;
+}
+
+/** 削除失敗の例外をユーザー向け文言に変換する。 */
+function deleteErrorMessage(error: unknown): string {
+  if (isApiError(error)) {
+    if (error.isUnauthorized) {
+      return "ログインが必要です。再度ログインしてください。";
+    }
+    if (error.isForbidden) {
+      return "ジャンルを削除する権限がありません。";
+    }
+    if (error.status === 404) {
+      return "このジャンルは既に削除されています。";
+    }
+    // 使用中。一覧を開いた後に、そのジャンルのスポットが登録された場合に起きる
+    // （件数が 0 のときしかボタンを押せないため、通常は事前に防がれている）。
+    if (error.status === 409) {
+      return "このジャンルはスポットで使われているため削除できません。一覧を再読み込みして件数を確認してください。";
+    }
+  }
+  if (isNetworkError(error)) {
+    return error.message;
+  }
+  return "ジャンルの削除に失敗しました。時間をおいて再度お試しください。";
 }

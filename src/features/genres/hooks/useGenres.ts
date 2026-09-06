@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Genre, GenreInput } from "../../../types";
+import type { GenreInput } from "../../../types";
 import {
   createGenre,
   deleteGenre,
@@ -10,7 +10,7 @@ import {
 /** ジャンル一覧の query key。 */
 export const genresQueryKey = ["genres"] as const;
 
-/** ジャンル一覧を取得する（現状は mock）。 */
+/** ジャンル一覧を取得する（GET /api/v1/tourism/genres）。 */
 export function useGenres() {
   return useQuery({
     queryKey: genresQueryKey,
@@ -38,8 +38,8 @@ export function useCreateGenre() {
 export function useUpdateGenre() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ code, labels }: { code: string; labels: Genre["labels"] }) =>
-      updateGenre(code, labels),
+    mutationFn: ({ code, input }: { code: string; input: GenreInput }) =>
+      updateGenre(code, input),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: genresQueryKey });
     },

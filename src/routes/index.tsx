@@ -59,16 +59,14 @@ const router = createBrowserRouter([
           { path: ROUTES.spotNew, element: <SpotFormScreen /> },
           { path: ROUTE_PATTERNS.spotEdit, element: <SpotFormScreen /> },
 
-          // レビュー・ユーザーは実 API に接続済みのため mock フラグで隠さない。
+          // レビュー・ユーザー・ジャンルは実 API に接続済みのため mock フラグで隠さない。
           { path: ROUTES.reviews, element: <ReviewListScreen /> },
           { path: ROUTES.users, element: <UserListScreen /> },
+          { path: ROUTES.genre, element: <GenreListScreen /> },
 
           // 準備中セクション（#24）
           { path: ROUTES.manner, element: <BlankScreen title="マナー" /> },
           { path: ROUTES.shelter, element: <BlankScreen title="避難所" /> },
-
-          // ジャンル（mock。Backend のジャンルマスタ API は未実装 / Backend #153）
-          { path: ROUTES.genre, element: <GenreListScreen /> },
 
           { path: ROUTES.stats, element: <BlankScreen title="統計" /> },
 
