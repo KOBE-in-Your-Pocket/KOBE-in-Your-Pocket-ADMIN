@@ -53,9 +53,12 @@ export type MannerItemDetail = {
   /**
    * アップロードしたアイコン画像の URL（Backend `manner_item.icon_url` / V16）。未設定なら null。
    *
-   * Client は `iconUrl` があればリモート画像で描き、無ければ従来どおり [icon] のキーで
-   * 同梱アセットへ解決する。既存データを移行せずに済ませるため、[icon] の置き換えではなく
-   * 追加になっている。
+   * **Client はまだこの項目を見ていない。** アプリのマナーアイコンは [icon] のキーを
+   * SF Symbols へ引く `MannerIcon` と、同梱 PNG を引く `MannerPictogram`（`imageKey`）で
+   * 描かれており、リモート画像の描画経路が無い。ADMIN でアップロードした画像は保存されるが
+   * アプリには出ないため、Client 側の対応が要る。
+   *
+   * 既存データを移行せずに済ませるため、[icon] の置き換えではなく追加になっている。
    */
   iconUrl: string | null;
   /** 関連する `Spot.id`。ID 参照のみで、実在検証はしない（Backend M-2）。 */
