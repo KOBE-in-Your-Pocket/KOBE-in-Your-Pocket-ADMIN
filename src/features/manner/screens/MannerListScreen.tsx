@@ -35,8 +35,7 @@ import styles from "./MannerListScreen.module.css";
 export function MannerListScreen() {
   const { data: items, isLoading, isError } = useMannerItems();
 
-  // 関連スポットは名前で選ばせたいので実 API から引く。マナー項目が mock でも、
-  // 紐付け先の ID は本物でないと実 API 化のときに全部やり直しになる。
+  // 関連スポットは ID ではなく名前で選ばせたいので、スポット一覧から引く。
   const {
     data: spots,
     isLoading: isSpotsLoading,
@@ -141,7 +140,7 @@ export function MannerListScreen() {
           /*
             画像未設定の項目は、従来のアイコン識別キーでアプリに表示される。
             Client がそのキーの絵を持たない場合は汎用アイコンになるため、
-            そこだけ警告を出す（Backend の seed 8 件はすべてこれに当たる）。
+            そこだけ警告を出す（Backend の seed（V6）8 件はすべてこれに当たる）。
           */
           <span className={styles.icon} title={item.icon}>
             <span className={styles.iconFallback}>{iconLabel(item.icon)}</span>
@@ -372,7 +371,7 @@ function deleteNote(item: MannerItemDetail): string {
   return "アプリのマナー一覧から表示が消えます。元に戻せません。";
 }
 
-/** mock / 実 API どちらの失敗もユーザー向け文言にする。 */
+/** 保存の失敗をユーザー向け文言にする。`ApiError` / `NetworkError` は message をそのまま使う。 */
 function errorMessage(error: unknown): string {
   if (error instanceof Error && error.message !== "") return error.message;
   return "保存に失敗しました。時間をおいて再度お試しください。";
