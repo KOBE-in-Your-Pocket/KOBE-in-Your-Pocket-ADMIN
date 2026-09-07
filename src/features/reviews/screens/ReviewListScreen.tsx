@@ -119,7 +119,7 @@ export function ReviewListScreen() {
             }}
             aria-label="スポットで絞り込む"
           >
-            <option value="all">スポットを選択</option>
+            <option value="all">すべて</option>
             {spotOptions.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -136,7 +136,7 @@ export function ReviewListScreen() {
             }}
             aria-label="評価で絞り込む"
           >
-            <option value="all">評価を選択</option>
+            <option value="all">すべて</option>
             {RATINGS.map((n) => (
               <option key={n} value={n}>
                 ★{n}
