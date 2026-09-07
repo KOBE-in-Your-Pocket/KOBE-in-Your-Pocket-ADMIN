@@ -103,12 +103,7 @@ export function SpotListScreen() {
     },
     { key: "name", header: "名前", primary: true },
     { key: "genre", header: "ジャンル", cell: (s) => genreLabel(s.genre) },
-    {
-      key: "coord",
-      header: "緯度・経度",
-      cell: (s) =>
-        `${s.coordinates.latitude.toFixed(4)}, ${s.coordinates.longitude.toFixed(4)}`,
-    },
+    { key: "address", header: "住所" },
     {
       key: "actions",
       header: "操作",
