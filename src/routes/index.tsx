@@ -11,6 +11,7 @@ import { BlankScreen } from "../features/blank";
 import { DashboardScreen } from "../features/dashboard";
 import { GenreListScreen } from "../features/genres";
 import { ReviewListScreen } from "../features/reviews";
+import { ShelterListScreen } from "../features/shelters";
 import { SpotFormScreen, SpotListScreen } from "../features/spots";
 import { UserListScreen } from "../features/users";
 import { AppLayout, ForbiddenScreen, RootRedirect } from "../layouts";
@@ -66,7 +67,8 @@ const router = createBrowserRouter([
 
           // 準備中セクション（#24）
           { path: ROUTES.manner, element: <BlankScreen title="マナー" /> },
-          { path: ROUTES.shelter, element: <BlankScreen title="避難所" /> },
+          // 避難所（実 API 接続済み。Backend は読み取りのみ）
+          { path: ROUTES.shelter, element: <ShelterListScreen /> },
 
           { path: ROUTES.stats, element: <BlankScreen title="統計" /> },
 
