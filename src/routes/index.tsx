@@ -10,6 +10,7 @@ import { AuthProvider, LoginScreen, landingPath, useAuth } from "../features/aut
 import { BlankScreen } from "../features/blank";
 import { DashboardScreen } from "../features/dashboard";
 import { GenreListScreen } from "../features/genres";
+import { MannerListScreen } from "../features/manner";
 import { ReviewListScreen } from "../features/reviews";
 import { SpotFormScreen, SpotListScreen } from "../features/spots";
 import { UserListScreen } from "../features/users";
@@ -64,8 +65,10 @@ const router = createBrowserRouter([
           { path: ROUTES.users, element: <UserListScreen /> },
           { path: ROUTES.genre, element: <GenreListScreen /> },
 
+          // マナー（mock。Backend の管理 API は未実装で、公開 API は参照のみ）
+          { path: ROUTES.manner, element: <MannerListScreen /> },
+
           // 準備中セクション（#24）
-          { path: ROUTES.manner, element: <BlankScreen title="マナー" /> },
           { path: ROUTES.shelter, element: <BlankScreen title="避難所" /> },
 
           { path: ROUTES.stats, element: <BlankScreen title="統計" /> },
