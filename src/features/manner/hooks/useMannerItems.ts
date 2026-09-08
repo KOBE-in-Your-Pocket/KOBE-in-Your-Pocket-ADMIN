@@ -10,7 +10,7 @@ import {
 /** マナー項目一覧の query key。 */
 export const mannerItemsQueryKey = ["manner-items"] as const;
 
-/** マナー項目の一覧を取得する（現状は mock）。 */
+/** マナー項目の一覧を取得する（GET /api/v1/manner/items）。 */
 export function useMannerItems() {
   return useQuery({
     queryKey: mannerItemsQueryKey,
@@ -21,9 +21,9 @@ export function useMannerItems() {
 /**
  * 追加・更新・削除は、いずれも成功・失敗ともに一覧を無効化する（`onSettled`）。
  *
- * 実 API 化後は他の運営者の操作と競合しうるため、サーバーの状態を正とする。
- * 失敗時に再取得しないと「既に削除されています」と出しながら行が残る、といった
- * ズレが起きる（ジャンル・ユーザー一覧と同じ方針）。
+ * 他の運営者の操作と競合しうるため、サーバーの状態を正とする。失敗時に再取得しないと
+ * 「既に削除されています」と出しながら行が残る、といったズレが起きる
+ * （ジャンル・ユーザー一覧と同じ方針）。
  */
 export function useCreateMannerItem() {
   const queryClient = useQueryClient();
