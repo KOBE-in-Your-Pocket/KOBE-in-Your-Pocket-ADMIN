@@ -1,2 +1,3 @@
 export { SpotListScreen } from "./screens/SpotListScreen";
 export { SpotFormScreen } from "./screens/SpotFormScreen";
+export { useSpots, spotsQueryKey } from "./hooks/useSpots";

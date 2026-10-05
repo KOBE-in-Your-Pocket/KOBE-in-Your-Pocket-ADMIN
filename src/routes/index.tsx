@@ -9,11 +9,12 @@ import {
 import { AuthProvider, LoginScreen, landingPath, useAuth } from "../features/auth";
 import { BlankScreen } from "../features/blank";
 import { DashboardScreen } from "../features/dashboard";
+import { GenreListScreen } from "../features/genres";
+import { MannerListScreen } from "../features/manner";
 import { ReviewListScreen } from "../features/reviews";
 import { SpotFormScreen, SpotListScreen } from "../features/spots";
 import { UserListScreen } from "../features/users";
 import { AppLayout, ForbiddenScreen, RootRedirect } from "../layouts";
-import { SHOW_MOCK_SCREENS } from "../lib/feature-flags";
 import { createQueryClient } from "../lib/query-client";
 import { AdminGuard, AuthGuard } from "./guards";
 import { DEV_ROUTES, ROUTE_PATTERNS, ROUTES } from "./paths";
@@ -51,43 +52,25 @@ const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          // ダッシュボードは統計 API が未整備で mock 固定値のため、既定は準備中。
-          {
-            index: true,
-            element: SHOW_MOCK_SCREENS ? (
-              <DashboardScreen />
-            ) : (
-              <BlankScreen title="ダッシュボード" />
-            ),
-          },
+          // ダッシュボード（統計 API に接続済み。Backend #169）
+          { index: true, element: <DashboardScreen /> },
 
           // スポット（実 API 接続済み。一覧 / 追加 / 編集 / 削除）
           { path: ROUTES.spots, element: <SpotListScreen /> },
           { path: ROUTES.spotNew, element: <SpotFormScreen /> },
           { path: ROUTE_PATTERNS.spotEdit, element: <SpotFormScreen /> },
 
-          // レビュー・ユーザーは未接続（mock）。既定は準備中。
-          {
-            path: ROUTES.reviews,
-            element: SHOW_MOCK_SCREENS ? (
-              <ReviewListScreen />
-            ) : (
-              <BlankScreen title="レビュー" />
-            ),
-          },
-          {
-            path: ROUTES.users,
-            element: SHOW_MOCK_SCREENS ? (
-              <UserListScreen />
-            ) : (
-              <BlankScreen title="ユーザー" />
-            ),
-          },
+          // レビュー・ユーザー・ジャンルは実 API に接続済みのため mock フラグで隠さない。
+          { path: ROUTES.reviews, element: <ReviewListScreen /> },
+          { path: ROUTES.users, element: <UserListScreen /> },
+          { path: ROUTES.genre, element: <GenreListScreen /> },
+
+          // マナー（mock。Backend の管理 API は未実装で、公開 API は参照のみ）
+          { path: ROUTES.manner, element: <MannerListScreen /> },
 
           // 準備中セクション（#24）
-          { path: ROUTES.manner, element: <BlankScreen title="マナー" /> },
           { path: ROUTES.shelter, element: <BlankScreen title="避難所" /> },
-          { path: ROUTES.genre, element: <BlankScreen title="ジャンル" /> },
+
           { path: ROUTES.stats, element: <BlankScreen title="統計" /> },
 
           // admin 専用（#25）

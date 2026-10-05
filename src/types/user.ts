@@ -19,6 +19,33 @@ export type User = PublicUser & {
 };
 
 /**
+ * `GET /api/v1/users` の 1 件（Backend `UserListItemResponse`）。
+ *
+ * ロールは含まない。正が Supabase Auth の `app_metadata.role` で users テーブルに無く、
+ * 一覧に載せると 1 件ごとに Admin API 呼び出しが必要になるため Backend が返さない設計
+ * （Backend #151）。一覧では表示しない。
+ */
+export type UserListItem = PublicUser & {
+  /** 登録日時（ISO 8601）。 */
+  createdAt: string;
+};
+
+/** `GET /api/v1/users` のページ情報（Backend `UserListMetaResponse`）。 */
+export type UserListMeta = {
+  /** 0 始まり。 */
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+};
+
+/** `GET /api/v1/users` のレスポンス封筒。 */
+export type UserListResponse = {
+  data: UserListItem[];
+  meta: UserListMeta;
+};
+
+/**
  * `POST /api/v1/auth/{signup,login,refresh}` のレスポンス。
  *
  * Backend `AuthSessionResponse` はすべて nullable。

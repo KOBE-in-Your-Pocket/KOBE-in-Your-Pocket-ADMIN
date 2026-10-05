@@ -1,2 +1,2 @@
 /** ダッシュボード hooks。 */
-export {};
+export { useDashboardStats, dashboardStatsQueryKey } from "./useDashboard";

@@ -65,14 +65,18 @@ export function useUpdateSpot(id: string) {
 /**
  * スポットを削除する（DELETE）。Backend は admin 専用。
  *
- * 成功時は `["spots"]` を無効化して一覧を再取得する。削除済みの詳細キャッシュも
+ * `["spots"]` を無効化して一覧を再取得する。削除済みの詳細キャッシュも
  * 前方一致で巻き込まれるため、個別の削除は不要。
+ *
+ * 無効化は `onSuccess` ではなく **`onSettled`**（成功・失敗とも）で行う。
+ * 他の運営者が先に削除していると Backend は 404 を返し、`onSuccess` だけだと
+ * 「既に削除されています」と表示しながら**その行が一覧に残り続ける**。
  */
 export function useDeleteSpot() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteSpot,
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: spotsQueryKey });
     },
   });

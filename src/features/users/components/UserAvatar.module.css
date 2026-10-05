@@ -1,0 +1,13 @@
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  /* 画像として描画されるときに縦横比が崩れないようにする。 */
+  object-fit: cover;
+}

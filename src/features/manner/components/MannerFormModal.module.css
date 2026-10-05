@@ -1,0 +1,158 @@
+/* スポット登録フォーム（SpotFormScreen.module.css）の言語タブ・入力に合わせる */
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 22px 24px 16px;
+}
+
+.title {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text-heading);
+}
+
+/* 編集時の ID。運営が決める値ではないので見出しの脇に小さく置く */
+.itemId {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px;
+  color: var(--color-text-faint);
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 20px;
+}
+
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--color-text-nav-icon);
+}
+
+.tab:hover {
+  color: var(--color-primary);
+}
+
+.tabActive {
+  composes: tab;
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* 未入力の言語タブに付ける印 */
+.tabMark {
+  margin-left: 5px;
+  font-size: 9px;
+  color: var(--color-danger);
+  vertical-align: middle;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px 4px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.field {
+  display: block;
+}
+
+.label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-label);
+  margin-bottom: 6px;
+}
+
+.required {
+  color: var(--color-danger);
+  margin-left: 2px;
+}
+
+.select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.textarea {
+  composes: select;
+  height: 92px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+/* スポットは 15 件程度。増えても高さを固定してフォーム全体が伸びないようにする */
+.spotList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 132px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.hint {
+  display: block;
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--color-text-subtle);
+}
+
+.warning {
+  display: block;
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--color-warning);
+}
+
+.error {
+  display: block;
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--color-danger);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px 22px;
+}

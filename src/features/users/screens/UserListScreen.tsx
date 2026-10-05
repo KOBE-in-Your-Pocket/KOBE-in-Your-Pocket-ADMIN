@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { isApiError, isNetworkError } from "../../../api";
 import {
   Button,
   Card,
@@ -8,25 +9,41 @@ import {
   Table,
 } from "../../../components";
 import { DEFAULT_PAGE_SIZE } from "../../../lib/constants";
+import { formatDate } from "../../../lib/date";
+import type { UserListItem } from "../../../types";
 import { useAuth } from "../../auth";
+import { UserAvatar } from "../components/UserAvatar";
 import { UserDeleteDialog } from "../components/UserDeleteDialog";
-import { listUsers, type MockUser } from "../api/users-api";
+import { useDeleteUser, useUsers } from "../hooks/useUsers";
 import styles from "./UserListScreen.module.css";
 
 export function UserListScreen() {
   const { user } = useAuth();
+  // Backend の削除 API は admin 専用（`@PreAuthorize("hasRole('ADMIN')")`）。
+  // operator に出すと押しても 403 になるため、列ごと出し分ける。
   const isAdmin = user?.role === "admin";
 
-  // mock のため一覧はローカル state。削除のみ反映。実 API は #34 / 削除 #35。
-  const [users, setUsers] = useState<MockUser[]>(listUsers);
+  const { data, isLoading, isError } = useUsers();
+  const deleteUser = useDeleteUser();
+
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [target, setTarget] = useState<MockUser | null>(null);
+  const [target, setTarget] = useState<UserListItem | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const filtered = useMemo(
-    () => users.filter((u) => search === "" || u.name.includes(search)),
-    [users, search],
-  );
+  // 表示名には英字も混ざるため、大文字小文字を区別せずに絞り込む
+  // （`TestUser` を `testuser` で引けないと運営画面の検索として使いにくい）。
+  //
+  // 絞り込みと空表示のメッセージで同じ値を見る。片方が `search`、もう片方が
+  // `search.trim()` だと、空白だけ入力したときに「全件返しているのに
+  // 『該当なし』と出る」というズレが起きる。
+  const keyword = useMemo(() => search.trim().toLowerCase(), [search]);
+
+  const filtered = useMemo(() => {
+    const users = data?.data ?? [];
+    if (keyword === "") return users;
+    return users.filter((u) => u.name.toLowerCase().includes(keyword));
+  }, [data, keyword]);
 
   const totalPages = Math.ceil(filtered.length / DEFAULT_PAGE_SIZE);
   // 削除で件数が減ると page が totalPages を超えて空表示になるため、有効範囲へ丸める。
@@ -36,12 +53,18 @@ export function UserListScreen() {
     currentPage * DEFAULT_PAGE_SIZE,
   );
 
-  const onDeleted = (id: string) => {
-    setUsers((prev) => prev.filter((u) => u.id !== id));
-    setTarget(null);
+  const onConfirmDelete = (id: string) => {
+    setDeleteError(null);
+    deleteUser.mutate(id, {
+      onSuccess: () => setTarget(null),
+      onError: (error) => {
+        setDeleteError(deleteErrorMessage(error));
+        setTarget(null);
+      },
+    });
   };
 
-  const baseColumns: Column<MockUser>[] = [
+  const baseColumns: Column<UserListItem>[] = [
     { key: "id", header: "ユーザーID" },
     { key: "name", header: "表示名", primary: true },
     {
@@ -49,35 +72,32 @@ export function UserListScreen() {
       header: "アイコン",
       headerLabel: "アイコン",
       cell: (u) => (
-        <div className={styles.avatar} style={{ background: u.color }}>
-          {u.initial}
-        </div>
+        <UserAvatar id={u.id} name={u.name} iconUrl={u.iconUrl} />
       ),
     },
-    { key: "date", header: "登録日" },
+    {
+      key: "createdAt",
+      header: "登録日",
+      cell: (u) => formatDate(u.createdAt),
+    },
   ];
 
   // 削除列は admin のみ。スプレッド条件で Column<T>[] の型を保つ。
-  const columns: Column<MockUser>[] = [
+  const columns: Column<UserListItem>[] = [
     ...baseColumns,
     ...(isAdmin
       ? [
           {
             key: "actions",
             header: "操作",
-            align: "end",
-            cell: (u: MockUser) => (
+            cell: (u: UserListItem) => (
               <div className={styles.rowActions}>
-                <Button
-                  size="sm"
-                  variant="danger"
-                  onClick={() => setTarget(u)}
-                >
+                <Button size="sm" variant="danger" onClick={() => setTarget(u)}>
                   削除
                 </Button>
               </div>
             ),
-          } satisfies Column<MockUser>,
+          } satisfies Column<UserListItem>,
         ]
       : []),
   ];
@@ -99,27 +119,68 @@ export function UserListScreen() {
           />
         </div>
 
-        <Table
-          columns={columns}
-          data={pageItems}
-          rowKey={(u) => u.id}
-          empty="該当するユーザーがいません。"
-        />
+        {deleteError && (
+          <div className={styles.errorBlock} role="alert">
+            {deleteError}
+          </div>
+        )}
 
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setPage}
-        />
+        {isError ? (
+          <div className={styles.errorBlock} role="alert">
+            ユーザーの取得に失敗しました。時間をおいて再度お試しください。
+          </div>
+        ) : (
+          <>
+            {/* 空表示は Table 内の 1 行に収める（検索条件が見えたまま残る）。 */}
+            <Table
+              columns={columns}
+              data={pageItems}
+              rowKey={(u) => u.id}
+              loading={isLoading}
+              empty={
+                keyword === ""
+                  ? "ユーザーがいません。"
+                  : "該当するユーザーがいません。"
+              }
+            />
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          </>
+        )}
       </Card>
 
       {target && (
         <UserDeleteDialog
           user={target}
-          onDeleted={onDeleted}
+          loading={deleteUser.isPending}
+          onConfirm={onConfirmDelete}
           onClose={() => setTarget(null)}
         />
       )}
     </>
   );
+}
+
+/** 削除失敗の例外をユーザー向け文言に変換する（Backend の生メッセージは出さない）。 */
+function deleteErrorMessage(error: unknown): string {
+  if (isApiError(error)) {
+    if (error.isUnauthorized) {
+      return "ログインが必要です。再度ログインしてください。";
+    }
+    // 削除は admin 専用。ボタンはロールで出し分けているが、権限変更直後などに起こりうる。
+    if (error.isForbidden) {
+      return "ユーザーを削除する権限がありません。";
+    }
+    // 他の運営者が先に削除した場合。一覧は再取得されるので実害はない。
+    if (error.status === 404) {
+      return "このユーザーは既に削除されています。";
+    }
+  }
+  if (isNetworkError(error)) {
+    return error.message;
+  }
+  return "ユーザーの削除に失敗しました。時間をおいて再度お試しください。";
 }
