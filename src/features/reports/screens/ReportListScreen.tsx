@@ -204,7 +204,7 @@ export function ReportListScreen() {
       <h1 className={styles.pageTitle}>通報一覧</h1>
       <p className={styles.note}>
         承認すると口コミをアプリで非表示にし（管理画面には残ります）、拒否すると口コミをそのまま表示して通報を閉じます。押した後 {UNDO_DELAY_MS / 1000}
-        秒間は取り消せます。現在はサンプルデータ（mock）です。
+        秒間は取り消せます。
       </p>
 
       <Card>

@@ -94,7 +94,5 @@ function actionErrorMessage(error: unknown): string {
     return FALLBACK_ERROR;
   }
   if (isNetworkError(error)) return error.message;
-  // mock は Error に画面向けの文言を入れて投げる
-  if (error instanceof Error && error.message) return error.message;
   return FALLBACK_ERROR;
 }
