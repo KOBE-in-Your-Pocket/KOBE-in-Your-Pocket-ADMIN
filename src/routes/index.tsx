@@ -11,6 +11,7 @@ import { BlankScreen } from "../features/blank";
 import { DashboardScreen } from "../features/dashboard";
 import { GenreListScreen } from "../features/genres";
 import { MannerListScreen } from "../features/manner";
+import { ReportListScreen } from "../features/reports";
 import { ReviewListScreen } from "../features/reviews";
 import { SpotFormScreen, SpotListScreen } from "../features/spots";
 import { UserListScreen } from "../features/users";
@@ -64,6 +65,9 @@ const router = createBrowserRouter([
           { path: ROUTES.reviews, element: <ReviewListScreen /> },
           { path: ROUTES.users, element: <UserListScreen /> },
           { path: ROUTES.genre, element: <GenreListScreen /> },
+
+          // 通報（mock。Backend の運営向け通報 API は #145 で実装中）
+          { path: ROUTES.reports, element: <ReportListScreen /> },
 
           // マナー（mock。Backend の管理 API は未実装で、公開 API は参照のみ）
           { path: ROUTES.manner, element: <MannerListScreen /> },
