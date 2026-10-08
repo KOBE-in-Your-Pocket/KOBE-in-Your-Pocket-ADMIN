@@ -22,7 +22,7 @@ export function useReviewReports() {
  *
  * 他の運営者と同時に対応しうるため、成功・失敗とも一覧を無効化する（`onSettled`）。
  *
- * 実 API 化で承認が口コミ削除（DELETE）になると、レビュー一覧（`["reviews"]`）も古くなる。
+ * 拒否後の削除（DELETE）をするとレビュー一覧（`["reviews"]`）も古くなる。
  * ただし reviews feature の内部（query key）を直接 import するとモジュール境界違反になるため、
  * mock の間は扱わない（mock の承認は実際のレビューを消さない）。
  */

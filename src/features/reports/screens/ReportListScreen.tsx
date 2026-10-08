@@ -37,8 +37,8 @@ import styles from "./ReportListScreen.module.css";
  * Backend と同じく「その状態の通報が 1 件以上ある口コミ」で絞り込む。
  * 承認・拒否は口コミへの**未対応の通報をまとめて**閉じる。
  *
- * 押し間違いへの備え（Backend は対応済みを戻せず、承認＝口コミ削除は復元できない）:
- * - 承認・削除は確認ダイアログを挟む。拒否は口コミが残るため挟まない
+ * 押し間違いへの備え（Backend は対応済みを戻せない。承認するとアプリで非表示になり、削除は復元できない）:
+ * - 承認・削除は確認ダイアログを挟む。拒否はアプリの表示が変わらないため挟まない
  * - どの操作も確定前に数秒の取り消し猶予を置く（useUndoableReportAction）
  * - 誤って拒否した口コミは、拒否済みの行から後で削除できる
  */
@@ -58,12 +58,12 @@ export function ReportListScreen() {
     const result: Record<StatusFilter, number> = {
       all: 0,
       OPEN: 0,
-      RESOLVED: 0,
-      DISMISSED: 0,
+      APPROVED: 0,
+      REJECTED: 0,
     };
     for (const g of groups ?? []) {
       result.all += 1;
-      for (const s of ["OPEN", "RESOLVED", "DISMISSED"] as const) {
+      for (const s of ["OPEN", "APPROVED", "REJECTED"] as const) {
         if (g.reports.some((r) => r.status === s)) result[s] += 1;
       }
     }
@@ -89,7 +89,7 @@ export function ReportListScreen() {
   const request = (group: ReviewReportGroup, action: ReportAction) => {
     setDetail(null);
     // 拒否は口コミを消さず、取り消し猶予もあるので確認を挟まない
-    if (action === "DISMISSED") schedule({ group, action });
+    if (action === "REJECTED") schedule({ group, action });
     else setConfirming({ group, action });
   };
 
@@ -170,17 +170,17 @@ export function ReportListScreen() {
               <Button
                 size="sm"
                 className={styles.actionButton}
-                onClick={() => request(g, "RESOLVED")}
+                onClick={() => request(g, "APPROVED")}
               >
-                {ACTION_LABELS.RESOLVED}
+                {ACTION_LABELS.APPROVED}
               </Button>
               <Button
                 size="sm"
                 variant="secondary"
                 className={styles.actionButton}
-                onClick={() => request(g, "DISMISSED")}
+                onClick={() => request(g, "REJECTED")}
               >
-                {ACTION_LABELS.DISMISSED}
+                {ACTION_LABELS.REJECTED}
               </Button>
             </div>
           );
@@ -203,7 +203,7 @@ export function ReportListScreen() {
     <>
       <h1 className={styles.pageTitle}>通報一覧</h1>
       <p className={styles.note}>
-        承認すると口コミを削除し、拒否すると口コミを残したまま通報を閉じます。押した後 {UNDO_DELAY_MS / 1000}
+        承認すると口コミをアプリで非表示にし（管理画面には残ります）、拒否すると口コミをそのまま表示して通報を閉じます。押した後 {UNDO_DELAY_MS / 1000}
         秒間は取り消せます。現在はサンプルデータ（mock）です。
       </p>
 
@@ -270,7 +270,7 @@ export function ReportListScreen() {
         <ConfirmDialog
           title={CONFIRM_TITLES[confirming.action]}
           message={confirmMessage(confirming)}
-          note={`口コミの削除は元に戻せません（押した後 ${UNDO_DELAY_MS / 1000} 秒間だけ取り消せます）。`}
+          note={confirmNote(confirming.action)}
           confirmLabel={CONFIRM_LABELS[confirming.action]}
           onConfirm={onConfirm}
           onClose={() => setConfirming(null)}
@@ -291,14 +291,14 @@ export function ReportListScreen() {
 }
 
 const CONFIRM_TITLES: Record<ReportAction, string> = {
-  RESOLVED: "通報を承認しますか？",
-  DISMISSED: "通報を拒否しますか？",
+  APPROVED: "通報を承認しますか？",
+  REJECTED: "通報を拒否しますか？",
   DELETE_REVIEW: "口コミを削除しますか？",
 };
 
 const CONFIRM_LABELS: Record<ReportAction, string> = {
-  RESOLVED: "承認する",
-  DISMISSED: "拒否する",
+  APPROVED: "承認する",
+  REJECTED: "拒否する",
   DELETE_REVIEW: "削除する",
 };
 
@@ -314,9 +314,17 @@ function confirmMessage({ group, action }: ScheduledAction): string {
   if (action === "DELETE_REVIEW") {
     return `拒否済みの${target}を削除します。通報は拒否済みのまま記録に残ります。`;
   }
-  return action === "RESOLVED"
-    ? `${target}を削除し、未対応の通報 ${group.openCount} 件を承認済みにします。`
+  return action === "APPROVED"
+    ? `${target}をアプリで非表示にし、未対応の通報 ${group.openCount} 件を承認済みにします。管理画面には残ります。`
     : `${target}は残し、未対応の通報 ${group.openCount} 件を拒否済みにします。`;
+}
+
+/** 確認ダイアログの注意書き。どの操作も確定後は戻せないが、戻せないものが操作ごとに違う。 */
+function confirmNote(action: ReportAction): string {
+  const undo = `押した後 ${UNDO_DELAY_MS / 1000} 秒間だけ取り消せます`;
+  return action === "DELETE_REVIEW"
+    ? `口コミの削除は元に戻せません（${undo}）。`
+    : `承認済みを未対応に戻すことはできません（${undo}）。`;
 }
 
 function toastMessage({ group, action }: ScheduledAction): string {

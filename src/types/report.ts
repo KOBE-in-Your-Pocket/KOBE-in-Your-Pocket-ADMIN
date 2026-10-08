@@ -5,8 +5,12 @@
  * 一覧は **通報 1 件ごとではなく、通報された口コミごと** にまとめた形で返る。
  */
 
-/** 通報の対応状況。`OPEN` から `RESOLVED` / `DISMISSED` へ一度だけ進む（戻す操作は無い）。 */
-export type ReportStatus = "OPEN" | "RESOLVED" | "DISMISSED";
+/**
+ * 通報の対応状況。`OPEN` から `APPROVED`（承認済み）/ `REJECTED`（拒否済み）へ一度だけ進む（戻す操作は無い）。
+ *
+ * 承認した口コミは削除されず、管理画面には残る。アプリ側は `hiddenByReport` を見て非表示にする（Backend #202）。
+ */
+export type ReportStatus = "OPEN" | "APPROVED" | "REJECTED";
 
 /** 運営が口コミ単位で付けられる対応結果。 */
 export type ReportDecision = Exclude<ReportStatus, "OPEN">;
@@ -62,7 +66,7 @@ export type ReviewReportItem = {
 /** 通報された口コミ 1 件分（その口コミへの通報をまとめたもの）。 */
 export type ReviewReportGroup = {
   reviewId: string;
-  /** 口コミが削除済みなら null。 */
+  /** 口コミが削除済み（投稿者の削除・退会、運営の削除）なら null。承認しただけでは null にならない。 */
   review: ReportedReview | null;
   reportCount: number;
   /** 未対応（OPEN）の通報件数。 */

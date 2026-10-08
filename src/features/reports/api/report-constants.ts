@@ -25,20 +25,20 @@ export type StatusFilter = ReportStatus | "all";
 
 export const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "OPEN", label: "未対応" },
-  { value: "RESOLVED", label: "承認済み" },
-  { value: "DISMISSED", label: "拒否済み" },
+  { value: "APPROVED", label: "承認済み" },
+  { value: "REJECTED", label: "拒否済み" },
   { value: "all", label: "すべて" },
 ];
 
 /**
  * 運営の対応ボタンと Backend の状態の対応。
  *
- * - 承認: 通報の内容を認める。口コミを削除し、通報は `RESOLVED`
- * - 拒否: 問題なしと判断する。口コミは残し、通報は `DISMISSED`
+ * - 承認: 通報の内容を認める。口コミはアプリで非表示になる（管理画面には残る）。通報は `APPROVED`
+ * - 拒否: 問題なしと判断する。口コミは残し、通報は `REJECTED`
  */
 export const DECISION_LABELS: Record<ReportDecision, string> = {
-  RESOLVED: "承認",
-  DISMISSED: "拒否",
+  APPROVED: "承認",
+  REJECTED: "拒否",
 };
 
 /**
@@ -59,18 +59,18 @@ export const UNDO_DELAY_MS = 5000;
  * 口コミ単位の対応状況。
  *
  * 未対応が 1 件でも残っていれば「未対応」。すべて閉じていれば、承認が 1 件でもあるかで
- * 承認済み / 拒否済みを決める（承認＝口コミ削除なので、そちらを優先して見せる）。
+ * 承認済み / 拒否済みを決める（承認＝アプリで非表示なので、そちらを優先して見せる）。
  */
 export function groupStatus(group: ReviewReportGroup): ReportStatus {
   if (group.openCount > 0) return "OPEN";
-  return group.reports.some((r) => r.status === "RESOLVED") ? "RESOLVED" : "DISMISSED";
+  return group.reports.some((r) => r.status === "APPROVED") ? "APPROVED" : "REJECTED";
 }
 
 /**
  * 拒否済みの口コミを後から削除できるか（誤って拒否した場合の救済）。
  *
- * 未対応の通報が残っていれば承認で削除できるので対象外。口コミが既に無ければ削除するものが無い。
+ * 未対応の通報が残っていれば承認で非表示にできるので対象外。口コミが既に無ければ削除するものが無い。
  */
 export function canDeleteAfterDismiss(group: ReviewReportGroup): boolean {
-  return group.openCount === 0 && group.review !== null && groupStatus(group) === "DISMISSED";
+  return group.openCount === 0 && group.review !== null && groupStatus(group) === "REJECTED";
 }

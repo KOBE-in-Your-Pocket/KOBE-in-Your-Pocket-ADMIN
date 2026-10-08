@@ -67,10 +67,10 @@ export function ReportDetailModal({ group, onAction, onClose }: ReportDetailModa
 
       {group.openCount > 0 && (
         <div className={styles.actions}>
-          <Button variant="secondary" onClick={() => onAction("DISMISSED")}>
-            {ACTION_LABELS.DISMISSED}
+          <Button variant="secondary" onClick={() => onAction("REJECTED")}>
+            {ACTION_LABELS.REJECTED}
           </Button>
-          <Button onClick={() => onAction("RESOLVED")}>{ACTION_LABELS.RESOLVED}</Button>
+          <Button onClick={() => onAction("APPROVED")}>{ACTION_LABELS.APPROVED}</Button>
         </div>
       )}
 

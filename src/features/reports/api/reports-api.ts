@@ -7,11 +7,12 @@
  * ```
  * GET    /api/v1/reports/reviews?status=&lang=ja&size=   口コミ単位にまとめた一覧
  * PATCH  /api/v1/reports/reviews/{reviewId}  { status }   未対応の通報をまとめて閉じる
- * DELETE /api/v1/tourism/reviews/{reviewId}               口コミ削除（未対応の通報は RESOLVED になる）
+ * DELETE /api/v1/tourism/reviews/{reviewId}               口コミ削除（未対応の通報は APPROVED になる）。拒否後の救済用
  * ```
  *
- * 「承認」は口コミ削除にあたる。Backend の PATCH `RESOLVED` は通報を閉じるだけで口コミを
- * 消さないため、実 API 化では **承認 = DELETE（レビュー）**、**拒否 = PATCH `DISMISSED`** にする。
+ * 「承認」は口コミを**削除しない**。PATCH `APPROVED` で通報を閉じると、口コミは管理画面に残ったまま
+ * アプリでは非表示になる（一般向けのレビュー取得が `hiddenByReport: true` を返す / Backend #202）。
+ * 実 API 化では **承認 = PATCH `APPROVED`**、**拒否 = PATCH `REJECTED`** にする。
  */
 import type {
   ReportDecision,
@@ -162,15 +163,15 @@ let groups: MockGroup[] = [
       postedAt: "2026-09-28T08:00:00Z",
     },
     reports: [
-      report("r-08", "SPAM", "2026-09-30T10:00:00Z", "test_user", null, "DISMISSED"),
+      report("r-08", "SPAM", "2026-09-30T10:00:00Z", "test_user", null, "REJECTED"),
     ],
   },
   {
     reviewId: "rv-1006",
     review: null,
     reports: [
-      report("r-09", "HATE", "2026-09-25T14:20:00Z", "ハル", null, "RESOLVED"),
-      report("r-10", "HATE", "2026-09-25T15:05:00Z", "Tom", null, "RESOLVED"),
+      report("r-09", "HATE", "2026-09-25T14:20:00Z", "ハル", null, "APPROVED"),
+      report("r-10", "HATE", "2026-09-25T15:05:00Z", "Tom", null, "APPROVED"),
     ],
   },
 ];
@@ -222,8 +223,8 @@ export async function fetchReviewReports(): Promise<ReviewReportListResponse> {
 /**
  * 口コミへの未対応の通報にまとめて対応する（mock）。
  *
- * - `RESOLVED`（承認）: 口コミを削除し、未対応の通報を対応済みにする
- * - `DISMISSED`（拒否）: 口コミは残し、未対応の通報を却下にする
+ * - `APPROVED`（承認）: 口コミは残し（アプリでは非表示）、未対応の通報を承認済みにする
+ * - `REJECTED`（拒否）: 口コミは残し、未対応の通報を拒否済みにする
  *
  * 対応済みの通報は触らない（Backend と同じく担当者・日時の履歴を上書きしない）。
  */
@@ -242,7 +243,6 @@ export async function handleReviewReports(
       ? g
       : {
           ...g,
-          review: decision === "RESOLVED" ? null : g.review,
           reports: g.reports.map((r) =>
             r.status === "OPEN"
               ? { ...r, status: decision, handledBy: MOCK_HANDLER_ID, handledAt }
@@ -274,7 +274,7 @@ export async function deleteReportedReview(reviewId: string): Promise<void> {
           review: null,
           reports: g.reports.map((r) =>
             r.status === "OPEN"
-              ? { ...r, status: "RESOLVED", handledBy: MOCK_HANDLER_ID, handledAt }
+              ? { ...r, status: "APPROVED", handledBy: MOCK_HANDLER_ID, handledAt }
               : r,
           ),
         },
