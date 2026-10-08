@@ -1,10 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReportDecision } from "../../../types";
-import {
-  deleteReportedReview,
-  fetchReviewReports,
-  handleReviewReports,
-} from "../api/reports-api";
+import { useDeleteReview } from "../../reviews";
+import { fetchReviewReports, handleReviewReports } from "../api/reports-api";
 
 /** 通報一覧の query key。 */
 export const reviewReportsQueryKey = ["review-reports"] as const;
@@ -21,10 +18,7 @@ export function useReviewReports() {
  * 口コミへの通報に承認・拒否で対応する。
  *
  * 他の運営者と同時に対応しうるため、成功・失敗とも一覧を無効化する（`onSettled`）。
- *
- * 拒否後の削除（DELETE）をするとレビュー一覧（`["reviews"]`）も古くなる。
- * ただし reviews feature の内部（query key）を直接 import するとモジュール境界違反になるため、
- * mock の間は扱わない（mock の承認は実際のレビューを消さない）。
+ * 承認・拒否は口コミを消さないため、レビュー一覧は無効化しない。
  */
 export function useHandleReviewReports() {
   const queryClient = useQueryClient();
@@ -42,11 +36,17 @@ export function useHandleReviewReports() {
   });
 }
 
-/** 拒否済みの口コミを後から削除する。無効化の方針は [useHandleReviewReports] と同じ。 */
+/**
+ * 拒否済みの口コミを後から削除する（DELETE /api/v1/tourism/reviews/{reviewId}）。
+ *
+ * 削除は reviews feature の公開 API（[useDeleteReview]）に任せる。レビュー一覧の無効化は
+ * そちらが行うので、ここでは通報一覧だけを無効化する（reviews の query key を直接触らない）。
+ */
 export function useDeleteReportedReview() {
   const queryClient = useQueryClient();
+  const deleteReview = useDeleteReview();
   return useMutation({
-    mutationFn: (reviewId: string) => deleteReportedReview(reviewId),
+    mutationFn: (reviewId: string) => deleteReview.mutateAsync(reviewId),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: reviewReportsQueryKey });
     },
