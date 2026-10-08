@@ -9,6 +9,7 @@ export const ROUTES = {
   spots: "/spots",
   spotNew: "/spots/new",
   reviews: "/reviews",
+  reports: "/reports",
   users: "/users",
   manner: "/manner",
   shelter: "/shelter",

@@ -1,0 +1,161 @@
+.pageTitle {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--color-text-heading);
+}
+
+.note {
+  margin: 0 0 16px;
+  font-size: 12.5px;
+  color: var(--color-text-subtle);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  margin-bottom: -1px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--color-text-heading);
+}
+
+.tabActive {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.tabCount {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--color-border-soft);
+  font-size: 11.5px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--color-text-label);
+}
+
+.tabActive .tabCount {
+  background: var(--color-primary-tint);
+  color: var(--color-primary);
+}
+
+/* 口コミのセル全体が詳細を開くボタン */
+.reviewButton {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 220px;
+  max-width: 360px;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.reviewButton:hover {
+  background: var(--color-primary-surface);
+}
+
+.reviewButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.detailHint {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.spotName {
+  font-weight: 700;
+  color: var(--color-text-heading);
+}
+
+/* 一覧では 2 行まで。全文は詳細モーダルで読む */
+.comment {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--color-text-muted);
+}
+
+.deleted {
+  color: var(--color-text-faint);
+}
+
+.reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.count {
+  white-space: nowrap;
+}
+
+.date {
+  white-space: nowrap;
+}
+
+.rowActions {
+  display: flex;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+/* 承認・拒否の押し間違いを減らすため、幅をそろえて広めに取る */
+.actionButton {
+  min-width: 64px;
+  justify-content: center;
+}
+
+.handled {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.handledAt {
+  font-size: 12px;
+  color: var(--color-text-faint);
+  white-space: nowrap;
+}
+
+.errorBlock {
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-danger);
+}
