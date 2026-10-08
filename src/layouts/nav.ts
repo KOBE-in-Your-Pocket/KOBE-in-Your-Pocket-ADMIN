@@ -33,6 +33,12 @@ export const NAV_ITEMS: NavItem[] = [
     icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
   },
   {
+    key: "reports",
+    path: ROUTES.reports,
+    label: "通報",
+    icon: "M4 22V4 M4 4h13l-2 4 2 4H4",
+  },
+  {
     key: "manner",
     path: ROUTES.manner,
     label: "マナー",
@@ -80,6 +86,7 @@ const CRUMBS: Record<string, string> = {
   [ROUTES.spotNew]: "ホーム / スポット / 新規追加",
   [ROUTES.users]: "ホーム / ユーザー",
   [ROUTES.reviews]: "ホーム / レビュー",
+  [ROUTES.reports]: "ホーム / 通報",
   [ROUTES.manner]: "ホーム / マナー",
   [ROUTES.shelter]: "ホーム / 避難所",
   [ROUTES.genre]: "ホーム / ジャンル",

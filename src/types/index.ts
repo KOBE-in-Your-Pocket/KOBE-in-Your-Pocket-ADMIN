@@ -3,6 +3,7 @@ export * from "./api";
 export * from "./genre";
 export * from "./language";
 export * from "./manner";
+export * from "./report";
 export * from "./review";
 export * from "./role";
 export * from "./shelter";
