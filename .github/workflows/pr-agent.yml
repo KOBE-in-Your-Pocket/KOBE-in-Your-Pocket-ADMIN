@@ -16,8 +16,18 @@ on:
 
 jobs:
   pr_agent:
-    # Bot の PR / コメントには反応させない（無限ループ防止）
-    if: ${{ github.event.sender.type != 'Bot' }}
+    # Bot の PR / コメントには反応させない（無限ループ防止）。
+    # コメント起動は PR 上かつリポジトリ関係者（OWNER/MEMBER/COLLABORATOR）のみ。
+    # 外部ユーザーのコメントで GEMINI_API_KEY の枠を消費させないため。
+    if: >-
+      github.event.sender.type != 'Bot' &&
+      (
+        github.event_name == 'pull_request' ||
+        (
+          github.event.issue.pull_request &&
+          contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+        )
+      )
     runs-on: ubuntu-latest
     permissions:
       issues: write
