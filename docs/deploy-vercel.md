@@ -45,6 +45,28 @@ CORS 設定が無いため rewrite 経由の構成は維持する。
 `src/api/client.ts` は `VITE_API_BASE_URL` が未設定なら同一オリジンを使うため、
 **Vercel では `VITE_API_BASE_URL` を設定しない**こと。
 
+## セキュリティヘッダ
+
+`vercel.json` の `headers` で全レスポンスに次を付けている。
+
+| ヘッダ | 値の要点 | 目的 |
+|---|---|---|
+| `Content-Security-Policy` | 下記 | XSS 時の被害範囲を絞る |
+| `X-Frame-Options` | `DENY` | クリックジャッキング対策（CSP の `frame-ancestors 'none'` の旧ブラウザ向け） |
+| `X-Content-Type-Options` | `nosniff` | MIME スニッフィング防止 |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | 画面の URL（ID 等）を外部へ渡さない |
+| `Permissions-Policy` | camera / microphone / geolocation / payment / usb を無効 | 使わない API を閉じる |
+| `Strict-Transport-Security` | 2 年, `includeSubDomains` | HTTPS 強制 |
+| `Cross-Origin-Opener-Policy` | `same-origin` | 別ウィンドウからの参照を切る |
+
+CSP の許可先は次のとおり。**外部のスクリプト・API・フォント等を新しく使うときは、ここを
+更新しないとブラウザにブロックされる**（DevTools の Console に `Refused to ...` が出る）。
+
+- `script-src 'self'` — ビルド成果物のみ。インラインスクリプト・`eval` は不可
+- `style-src` / `font-src` — 自オリジン + Google Fonts（`index.html` で読み込み）
+- `img-src 'self' data: blob: https:` — 画像は S3 の公開 URL など外部ホストから来るため https 全般を許可
+- `connect-src 'self'` — API は rewrite 経由の同一オリジンのみ（`VITE_API_BASE_URL` を設定しない前提）
+
 ## 初回セットアップ（1回だけ）
 
 1. [vercel.com](https://vercel.com) にログイン（GitHub アカウント連携）
